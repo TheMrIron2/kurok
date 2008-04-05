@@ -1771,8 +1771,13 @@ R_Mirror
 
 void R_Mirror (void)
 {
-	float		d;
+
 	msurface_t	*s;
+
+if(!kurok)
+{
+
+	float		d;
 	entity_t	*ent;
 
 	if (!mirror)
@@ -1800,7 +1805,6 @@ void R_Mirror (void)
 	R_RenderScene ();
 	R_DrawWaterSurfaces ();
 
-
 	if (mirror_plane->normal[2])
 	{
 
@@ -1814,9 +1818,18 @@ void R_Mirror (void)
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s);
 	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
+}
+else
+{
+	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
+	for ( ; s ; s=s->texturechain)
+		R_RenderBrushPoly (s);
+	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
+}
 
 }
 */
+
 /*
 ======================
 R_Fog_f

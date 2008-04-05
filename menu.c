@@ -335,7 +335,7 @@ void M_Main_Draw (void)
 	int		f;
 	qpic_t	*p,*b, *s, *m, *o, *h, *q, *t;
 	
-	if (qurok)
+	if (kurok)
 	{
         t = Draw_CachePic ("gfx/menu/title.lmp");
     	M_DrawPic ((320-t->width)/2, 16, t);
@@ -433,7 +433,7 @@ void M_Main_Key (int key)
 			M_Menu_Help_f ();
 			break;
 
-//        if(!qurok)
+//        if(!kurok)
 //        {
     		case 4:
 	   		  M_Menu_Quit_f ();
@@ -466,7 +466,7 @@ void M_SinglePlayer_Draw (void)
 	b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 
-	if (qurok)
+	if (kurok)
 	{
         t = Draw_CachePic ("gfx/menu/title.lmp");
     	M_DrawPic ((320-t->width)/2, 16, t);
@@ -621,7 +621,7 @@ void M_Load_Draw (void)
 	b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
  
-    if (qurok)
+    if (kurok)
     {
         p = Draw_CachePic ("gfx/menu/sp/load_0.lmp");
         // line cursor
@@ -650,7 +650,7 @@ void M_Save_Draw (void)
 	b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 
-    if (qurok)
+    if (kurok)
     {
         p = Draw_CachePic ("gfx/menu/sp/save_0.lmp");
         // line cursor
@@ -771,7 +771,7 @@ void M_MultiPlayer_Draw (void)
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 
-	if (qurok)
+	if (kurok)
 	{
 //        M_DrawTransPic (72, 32, Draw_CachePic ("gfx/menu/multi_0.lmp") );
 
@@ -1013,7 +1013,7 @@ void M_Setup_Draw (void)
 	int     offset = 0;
 	int				top, bottom, tc, bc;
 
-	if (qurok)
+	if (kurok)
 	{
 	    if (setup_cursor == 0+offset)
 		    M_DrawCharacter (168 + 8*strlen(setup_hostname), setup_cursor_table [setup_cursor], 10+((int)(realtime*30)&1));
@@ -1301,11 +1301,9 @@ void M_Net_Draw (void)
 	int		f;
 	qpic_t	*p,*b;
 	
-	if (qurok)
-	{}
-	else
+	if (!kurok)
 	{
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+		M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
     }
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
@@ -1581,7 +1579,7 @@ void M_AdjustSliders (int dir)
 	{
 		case OPT_SUBMENU:
 	        m_submenu += dir;
-	        if (qurok)
+	        if (kurok)
 	        {
 	            if (m_submenu > KNUM_SUBMENU-1)
 	        	    m_submenu = 0;
@@ -1665,7 +1663,7 @@ void M_AdjustSliders (int dir)
 				break;
 
 			case OPT_ALWAYRUN:	// allways run
-	            if (qurok)
+	            if (kurok)
 	            {
 		            if (cl_forwardspeed.value > 150)
 	                {
@@ -1888,7 +1886,7 @@ void M_Options_Draw (void)
 	qpic_t	*p,*b;
 	int offset = 32;
 	
-	if (qurok)
+	if (kurok)
 	{
         offset = 64;
 	    p = Draw_CachePic ("gfx/menu/option_0.lmp");
@@ -1962,7 +1960,7 @@ void M_Options_Draw (void)
 			M_DrawCheckbox (220, offset+(OPT_MOUSESTAFE*8), in_analog_strafe.value );
 
         	M_Print (16, offset+(OPT_ALWAYRUN*8),        "            Always Run");
-        	if (qurok)
+        	if (kurok)
 	            M_DrawCheckbox (220, offset+(OPT_ALWAYRUN*8), cl_forwardspeed.value > 150);
             else
 	            M_DrawCheckbox (220, offset+(OPT_ALWAYRUN*8), cl_forwardspeed.value > 200);
@@ -2400,7 +2398,7 @@ void M_Keys_Draw (void)
 #endif
 
 // search for known bindings
-    if (qurok)
+    if (kurok)
     {
 	    if (bind_grab)
 		    M_DrawCharacter (130, 48 + keys_cursor*8, '?');
@@ -2485,7 +2483,7 @@ void M_Keys_Key (int k)
 		}
 		else if (k != '`')
 		{
-            if (qurok)
+            if (kurok)
 			    sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), kbindnames[keys_cursor][0]);
 			else
 			    sprintf (cmd, "bind \"%s\" \"%s\"\n", Key_KeynumToString (k), bindnames[keys_cursor][0]);
@@ -2508,7 +2506,7 @@ void M_Keys_Key (int k)
 		keys_cursor--;
 		if (keys_cursor < 0)
 		{
-		    if (qurok)
+		    if (kurok)
 			    keys_cursor = KNUMCOMMANDS-1;
 			else
 			    keys_cursor = NUMCOMMANDS-1;
@@ -2519,7 +2517,7 @@ void M_Keys_Key (int k)
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
 		keys_cursor++;
-		if (qurok)
+		if (kurok)
 		{
 		    if (keys_cursor >= KNUMCOMMANDS)
 			    keys_cursor = 0;
@@ -2532,14 +2530,14 @@ void M_Keys_Key (int k)
 		break;
 
 	case K_ENTER:		// go into bind mode
-	    if (qurok)
+	    if (kurok)
 		    M_FindKeysForCommand (kbindnames[keys_cursor][0], keys);
 	    else
 	        M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
 		S_LocalSound ("misc/menu2.wav");
 		if (keys[1] != -1)
 		{
-		    if (qurok)
+		    if (kurok)
 			    M_UnbindCommand (kbindnames[keys_cursor][0]);
 		    else
 		        M_UnbindCommand (bindnames[keys_cursor][0]);
@@ -2550,7 +2548,7 @@ void M_Keys_Key (int k)
 	case K_BACKSPACE:		// delete bindings
 	case K_DEL:				// delete bindings
 		S_LocalSound ("misc/menu2.wav");
-		if (qurok)
+		if (kurok)
 		    M_UnbindCommand (kbindnames[keys_cursor][0]);
         else
 		    M_UnbindCommand (bindnames[keys_cursor][0]);
@@ -2599,10 +2597,8 @@ void M_Menu_Help_f (void)
 
 void M_Help_Draw (void)
 {
-	if (qurok)
-	{
+	if (kurok)
 	    M_DrawPic (vid.width - 560, 0, Draw_CachePic ( va("gfx/menu/hp/help%i.lmp", help_page)) );
-    }
     else
         M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
 }
@@ -3079,14 +3075,9 @@ void M_SerialConfig_Draw (void)
 	char	*startJoin;
 	char	*directModem;
 	
-	if (qurok)
-	{
-        
-    }
-	else
-	{
+	if (!kurok)
 	    M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-    }
+
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -3341,12 +3332,9 @@ void M_ModemConfig_Draw (void)
 	qpic_t	*p,*b;
 	int		basex;
 	
-	if (qurok)
-	{}
-	else
-	{
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-    }
+	if (!kurok)
+		M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -3534,13 +3522,8 @@ void M_LanConfig_Draw (void)
 	char	*startJoin;
 	char	*protocol;
 	
-	if (qurok)
-	{
-
-    }
-	else
+	if (!kurok)
 	    M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-
 
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
@@ -3585,7 +3568,7 @@ void M_LanConfig_Draw (void)
 	if (*m_return_reason)
 		M_PrintWhite (basex, 148, m_return_reason);
 
-	if (qurok)
+	if (kurok)
 	{
 	    M_DrawCharacter (basex-8, lanConfig_cursor_table [lanConfig_cursor], 12+((int)(realtime*30)&1));
 
@@ -3793,7 +3776,7 @@ level_t		levels[] =
 	{"dm6", "The Dark Zone"}
 };
 
-level_t		quroklevels[] =
+level_t		kuroklevels[] =
 {
 	{"start", "< Entrance >"},	// 0
 
@@ -3878,7 +3861,7 @@ episode_t	episodes[] =
 	{"Deathmatch Arena", 32, 6}
 };
 
-episode_t	qurokepisodes[] =
+episode_t	kurokepisodes[] =
 {
 	{"< Kurok Intro >", 0, 1},
 	{"< Jungle Base Chapter >", 1, 6},
@@ -3933,17 +3916,16 @@ void M_GameOptions_Draw (void)
 	qpic_t	*p,*b;
 	int		x;
 	
-	if (qurok)
-	{
+	if (kurok)
         // line cursor
 	    M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(realtime*30)&1));
-    }
 	else
 	{
 	    M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
         // line cursor
 	    M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(realtime*4)&1));
     }
+
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -4000,7 +3982,7 @@ void M_GameOptions_Draw (void)
 		M_Print (160, 80, "Hard difficulty");
 	else
     {
-        if (qurok)
+        if (kurok)
             M_Print (160, 80, "Insane difficulty");
         else
             M_Print (160, 80, "Nightmare difficulty");
@@ -4025,8 +4007,8 @@ void M_GameOptions_Draw (void)
    //PGM 01/07/97 added rogue episodes
    else if (rogue)
       M_Print (160, 112, rogueepisodes[startepisode].description);
-   else if (qurok)
-      M_Print (160, 112, qurokepisodes[startepisode].description);
+   else if (kurok)
+      M_Print (160, 112, kurokepisodes[startepisode].description);
    else
       M_Print (160, 112, episodes[startepisode].description);
 
@@ -4043,10 +4025,10 @@ void M_GameOptions_Draw (void)
       M_Print (160, 120, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].description);
       M_Print (160, 128, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name);
    }
-   else if (qurok)
+   else if (kurok)
    {
-      M_Print (160, 120, quroklevels[qurokepisodes[startepisode].firstLevel + startlevel].description);
-      M_Print (160, 128, quroklevels[qurokepisodes[startepisode].firstLevel + startlevel].name);
+      M_Print (160, 120, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].description);
+      M_Print (160, 128, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].name);
    }
    else
    {
@@ -4145,7 +4127,7 @@ void M_NetStart_Change (int dir)
 	//PGM 03/02/97 added 1 for dmatch episode
 		else if (rogue)
 			count = 4;
-		else if (qurok)
+		else if (kurok)
 			count = 3;
 		else if (registered.value)
 			count = 7;
@@ -4169,8 +4151,8 @@ void M_NetStart_Change (int dir)
 	//PGM 01/06/97 added hipnotic episodes
 		else if (rogue)
 			count = rogueepisodes[startepisode].levels;
-		else if (qurok)
-			count = qurokepisodes[startepisode].levels;
+		else if (kurok)
+			count = kurokepisodes[startepisode].levels;
 		else
 			count = episodes[startepisode].levels;
 
@@ -4234,8 +4216,8 @@ void M_GameOptions_Key (int key)
 				Cbuf_AddText ( va ("map %s\n", hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name) );
 			else if (rogue)
 				Cbuf_AddText ( va ("map %s\n", roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name) );
-			else if (qurok)
-				Cbuf_AddText ( va ("map %s\n", quroklevels[qurokepisodes[startepisode].firstLevel + startlevel].name) );
+			else if (kurok)
+				Cbuf_AddText ( va ("map %s\n", kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].name) );
 			else
 				Cbuf_AddText ( va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
 
@@ -4295,18 +4277,18 @@ void M_Search_Draw (void)
 		return;
 	}
 
-    if (qurok)
+    if (kurok)
     {
-	M_PrintWhite ((320/2) - ((22*8)/2), 64, "No Kurok servers found");
-	if ((realtime - searchCompleteTime) < 3.0)
-		return;
+		M_PrintWhite ((320/2) - ((22*8)/2), 64, "No Kurok servers found");
+		if ((realtime - searchCompleteTime) < 3.0)
+			return;
     }
     
     else
     {
-	M_PrintWhite ((320/2) - ((22*8)/2), 64, "No servers found");
-	if ((realtime - searchCompleteTime) < 3.0)
-		return;
+		M_PrintWhite ((320/2) - ((22*8)/2), 64, "No servers found");
+		if ((realtime - searchCompleteTime) < 3.0)
+			return;
     }
     
 	M_Menu_LanConfig_f ();
@@ -4359,7 +4341,7 @@ void M_ServerList_Draw (void)
 		slist_sorted = true;
 	}
 
-    if(qurok)
+    if(kurok)
         M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*30)&1));
     else
         M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*4)&1));
@@ -4464,7 +4446,7 @@ void M_Draw (void)
 		}
 		else
 		{
-            if (qurok)
+            if (kurok)
                 Draw_FadeScreen2 ();
             else
 			    Draw_FadeScreen ();

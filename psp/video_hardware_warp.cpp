@@ -217,6 +217,7 @@ void EmitWaterPolys (msurface_t *fa)
 		const glvert_t*	src			= p->verts;
 		const glvert_t*	last_vertex = src + unclipped_vertex_count;
 		glvert_t*		dst			= unclipped_vertices;
+
 		while (src != last_vertex)
 		{
 			// Get the input UVs.
@@ -273,8 +274,87 @@ void EmitWaterPolys (msurface_t *fa)
 	}
 }
 
+/*
+=============
+EmitReflectivePolys
 
+Does a reflective warp on the pre-fragmented glpoly_t chain
+=============
+*/
+void EmitReflectivePolys (msurface_t *fa)
+{
+	// For each polygon...
+	for (const glpoly_t* p = fa->polys; p; p = p->next)
+	{
+		// Allocate memory for this polygon.
+		const int		unclipped_vertex_count	= p->numverts;
+		glvert_t* const	unclipped_vertices		=
+			static_cast<glvert_t*>(sceGuGetMemory(sizeof(glvert_t) * unclipped_vertex_count));
 
+		// Generate each vertex.
+		const glvert_t*	src			= p->verts;
+		const glvert_t*	last_vertex = src + unclipped_vertex_count;
+		glvert_t*		dst			= unclipped_vertices;
+
+		while (src != last_vertex)
+		{
+			vec3_t	dir;
+			VectorSubtract(src->xyz, r_origin, dir);
+			dir[2] *= 3;	// flatten the sphere
+
+			const float length = 6 * 63 / sqrtf(DotProduct(dir, dir));
+
+			dir[0] *= length;
+			dir[1] *= length;
+
+			dst->st[0] = (dir[0]) * (1.0f / 256.0f);
+			dst->st[1] = (dir[1]) * (1.0f / 256.0f);
+			dst->xyz[0] = src->xyz[0];
+			dst->xyz[1] = src->xyz[1];
+			dst->xyz[2] = src->xyz[2];
+
+			// Next vertex.
+			++src;
+			++dst;
+		}
+
+		// Do these vertices need clipped?
+		if (clipping::is_clipping_required(unclipped_vertices, unclipped_vertex_count))
+		{
+			// Clip the polygon.
+			const glvert_t*	clipped_vertices;
+			std::size_t		clipped_vertex_count;
+			clipping::clip(
+				unclipped_vertices,
+				unclipped_vertex_count,
+				&clipped_vertices,
+				&clipped_vertex_count);
+
+			// Any vertices left?
+			if (clipped_vertex_count)
+			{
+				// Copy the vertices to the display list.
+				const std::size_t buffer_size = clipped_vertex_count * sizeof(glvert_t);
+				glvert_t* const display_list_vertices = static_cast<glvert_t*>(sceGuGetMemory(buffer_size));
+				memcpy(display_list_vertices, clipped_vertices, buffer_size);
+
+				// Draw the clipped vertices.
+				sceGuDrawArray(
+					GU_TRIANGLE_FAN,
+					GU_TEXTURE_32BITF | GU_VERTEX_32BITF,
+					clipped_vertex_count, 0, display_list_vertices);
+			}
+		}
+		else
+		{
+			// Draw the vertices.
+			sceGuDrawArray(
+				GU_TRIANGLE_FAN,
+				GU_TEXTURE_32BITF | GU_VERTEX_32BITF,
+				unclipped_vertex_count, 0, unclipped_vertices);
+		}
+	}
+}
 
 /*
 =============
@@ -412,7 +492,7 @@ void EmitBothSkyLayers (msurface_t *fa)
 {
 	GL_Bind (solidskytexture);
 
-	if (qurok)
+	if (kurok)
 		speedscale = realtime*2;
 	else
 		speedscale = realtime*8;
@@ -426,7 +506,7 @@ void EmitBothSkyLayers (msurface_t *fa)
 
 	GL_Bind (alphaskytexture);
 
-	if (qurok)
+	if (kurok)
 		speedscale = realtime*4;
 	else
 		speedscale = realtime*16;
@@ -451,7 +531,7 @@ void R_DrawSkyChain (msurface_t *s)
 	// used when gl_texsort is on
 	GL_Bind(solidskytexture);
 
-	if (qurok)
+	if (kurok)
 		speedscale = realtime*2;
 	else
 		speedscale = realtime*8;
@@ -466,7 +546,7 @@ void R_DrawSkyChain (msurface_t *s)
 
 	GL_Bind (alphaskytexture);
 
-	if (qurok)
+	if (kurok)
 		speedscale = realtime*4;
 	else
 		speedscale = realtime*16;

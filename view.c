@@ -605,8 +605,8 @@ void V_UpdatePalette (void)
 
 	V_CalcBlend ();
 
-	a = 0;
-//	a = v_blend[3];
+//	a = 0;
+	a = v_blend[3];
 	r = 255*v_blend[0]*a;
 	g = 255*v_blend[1]*a;
 	b = 255*v_blend[2]*a;
@@ -797,7 +797,7 @@ void CalcGunAngle (void)
 	SceCtrlData pad;
 	sceCtrlPeekBufferPositive(&pad, 1);
 
-    if (qurok)
+    if (kurok)
     {
         cl.viewent.angles[ROLL] -= sin(cl.time*3);
         if (!in_disable_analog.value)
@@ -867,7 +867,7 @@ Idle swaying
 */
 void V_AddIdle (void)
 {
-    if (qurok)
+    if (kurok)
     {
         double xyspeed;
 	    float bspeed;
@@ -943,7 +943,7 @@ void V_CalcIntermissionRefdef (void)
 	view->model = NULL;
 
 // allways idle in intermission
-    if (qurok)
+    if (kurok)
     {
     }
     else
@@ -1035,7 +1035,7 @@ void V_CalcRefdef (void)
 	}
     view->origin[2] += bob;
 
-    if(!qurok)
+    if(!kurok)
     {
 
 // fudge position around to keep amount of weapon visible
@@ -1105,17 +1105,15 @@ void V_RenderView (void)
 	if (con_forcedup)
 		return;
 
-    if (qurok)
-    {}
-    else
+    if (!kurok)
     {
-// don't allow cheats in multiplayer
-	if (cl.maxclients > 1)
-	{
-		Cvar_Set ("scr_ofsx", "0");
-		Cvar_Set ("scr_ofsy", "0");
-		Cvar_Set ("scr_ofsz", "0");
-	}
+		// don't allow cheats in multiplayer
+		if (cl.maxclients > 1)
+		{
+			Cvar_Set ("scr_ofsx", "0");
+			Cvar_Set ("scr_ofsy", "0");
+			Cvar_Set ("scr_ofsz", "0");
+		}
     }
 
 	if (cl.intermission)

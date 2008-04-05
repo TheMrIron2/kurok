@@ -59,7 +59,6 @@ COMMON_OBJS = \
 	$(OBJ_DIR)/psp/gethost.o \
 	$(OBJ_DIR)/psp/fnmatch.o \
 	\
-	$(OBJ_DIR)/alpha.o \
 	$(OBJ_DIR)/chase.o \
 	$(OBJ_DIR)/cl_demo.o \
 	$(OBJ_DIR)/cl_input.o \

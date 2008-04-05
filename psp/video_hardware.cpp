@@ -181,7 +181,7 @@ void VID_Init(unsigned char* palette)
 		sceGuClearColor(GU_RGBA(0x10,0x20,0x40,0xff));
 
 		// Set up depth.
-		sceGuDepthRange(0, 8192);
+		sceGuDepthRange(0, 65535);
 		sceGuDepthFunc(GU_LEQUAL);
 		sceGuEnable(GU_DEPTH_TEST);
 
@@ -338,7 +338,7 @@ void D_StartParticles (void)
 		sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
     	sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 
-		if (qurok)
+		if (kurok)
 			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
 		else
 			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
@@ -475,7 +475,7 @@ void SCR_ScreenShot_f (void)
 // 
 // find a file name to save it to 
 // 
-    if (qurok)
+    if (kurok)
 	    strcpy(pcxname,"sshot00.tga");
     else
         strcpy(pcxname,"quake00.tga");
@@ -491,7 +491,7 @@ void SCR_ScreenShot_f (void)
 	} 
 	if (i==100) 
 	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
+		Con_Printf ("SCR_ScreenShot_f: Couldn't create a TGA file\n");
 		return;
  	}
 

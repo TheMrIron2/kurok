@@ -104,18 +104,14 @@ void GL_Bind (int texture_index)
 
 	// Set the texture mode.
 	sceGuTexMode(texture.format, texture.mipmaps , 0, GU_TRUE);
-	
-	if (texture.mipmaps > 0 && r_mipmaps.value > 0) 
+
+	if (texture.mipmaps > 0 && r_mipmaps.value > 0)
     {
         sceGuTexFilter(GU_LINEAR_MIPMAP_LINEAR, GU_LINEAR_MIPMAP_LINEAR);
-
 		sceGuTexLevelMode(r_mipmaps_func.value, r_mipmaps_bias.value); // manual slope setting
-
 	}
-	else 
-    {
+	else
 		sceGuTexFilter(texture.filter, texture.filter);
-	}
 
 	// Set the texture image.
 	const void* const texture_memory = texture.vram ? texture.vram : texture.ram;
@@ -300,7 +296,7 @@ void Draw_Init (void)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
 	
-	if (qurok)
+	if (kurok)
 	{
     }
     else
@@ -478,7 +474,7 @@ void Draw_Crosshair(void)
 
 	qpic_t	*pic;
 
-if (qurok)
+if (kurok)
 {
 	// Read the pad state.
 	SceCtrlData pad;
@@ -537,16 +533,16 @@ if (qurok)
             if (in_freelook_analog.value)
             {
                 if (m_pitch.value < 0)
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.1 ),
-                             (vid.height - pic->height)/2 + cl_crossy.value - ((pad.Ly - 128) * in_y_axis_adjust.value * 0.1 ), pic);
+                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
+                             (vid.height - pic->height)/2 + cl_crossy.value - ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 ), pic);
                 else
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.1 ),
-                             (vid.height - pic->height)/2 + cl_crossy.value + ((pad.Ly - 128) * in_y_axis_adjust.value * 0.1 ), pic);
+                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
+                             (vid.height - pic->height)/2 + cl_crossy.value + ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 ), pic);
             }
             else
             {
                 if (!in_analog_strafe.value)
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.1 ),
+                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
                              (vid.height - pic->height)/2 + cl_crossy.value, pic);
                 else
                     Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value, (vid.height - pic->height)/2 + cl_crossy.value, pic);
@@ -783,13 +779,15 @@ void Draw_FadeScreen (void)
 	vertices[1].z		= 0;
 
 	sceGuDisable(GU_TEXTURE_2D);
+	sceGuDisable(GU_ALPHA_TEST);
 
-	sceGuColor(GU_RGBA(0, 0, 0, 0x80));
+	sceGuColor(GU_RGBA(0, 0, 0, 0x40));
 	sceGuDrawArray(
 		GU_SPRITES,
 		GU_VERTEX_16BIT | GU_TRANSFORM_2D,
 		2, 0, vertices);
 
+	sceGuEnable(GU_ALPHA_TEST);
 	sceGuEnable(GU_TEXTURE_2D);
 
 	Sbar_Changed();
@@ -803,36 +801,9 @@ Draw_FadeScreen2
 */
 void Draw_FadeScreen2 (void)
 {
-/*
-	struct vertex
-	{
-		short	x, y, z;
-	};
-
-	vertex* const vertices = static_cast<vertex*>(sceGuGetMemory(sizeof(vertex) * 2));
-
-	vertices[0].x		= 0;
-	vertices[0].y		= 0;
-	vertices[0].z		= 0;
-	vertices[1].x		= vid.width;
-	vertices[1].y		= vid.height;
-	vertices[1].z		= 0;
-
-	sceGuDisable(GU_TEXTURE_2D);
-
-	sceGuColor(GU_RGBA(0x80, 0x00, 0x00, 0x80));
-	sceGuDrawArray(
-		GU_SPRITES,
-		GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-		2, 0, vertices);
-
-	sceGuEnable(GU_TEXTURE_2D);
-
-	Sbar_Changed();
-*/
-
-	Draw_AlphaPic (0, 0, conback, 0.5f);
-
+	sceGuDisable(GU_ALPHA_TEST);
+	Draw_AlphaPic (0, 0, conback, 0.75f);
+	sceGuEnable(GU_ALPHA_TEST);
 }
 
 //=============================================================================

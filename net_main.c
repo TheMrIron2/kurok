@@ -307,7 +307,7 @@ void NET_Slist_f (void)
 
 	if (! slistSilent)
 	{
-        if (qurok)
+        if (kurok)
 		    Con_Printf("Looking for Kurok servers...\n");
 		else
 		    Con_Printf("Looking for Quake servers...\n");

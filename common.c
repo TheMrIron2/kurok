@@ -53,7 +53,7 @@ char	**com_argv;
 #define CMDLINE_LENGTH	256
 char	com_cmdline[CMDLINE_LENGTH];
 
-qboolean		standard_quake = true, rogue, hipnotic, qurok;
+qboolean		standard_quake = true, rogue, hipnotic, kurok;
 
 // this graphic needs to be in the pak file to use registered features
 unsigned short pop[] =
@@ -1115,9 +1115,9 @@ void COM_InitArgv (int argc, char **argv)
 		standard_quake = false;
 	}
 
-	if (COM_CheckParm ("-qurok"))
+	if (COM_CheckParm ("-kurok"))
 	{
-		qurok = true;
+		kurok = true;
 		standard_quake = true;
 	}
 	
@@ -1787,7 +1787,7 @@ void COM_InitFilesystem (void)
 		COM_AddGameDirectory (va("%s/rogue", basedir) );
 	if (COM_CheckParm ("-hipnotic"))
 		COM_AddGameDirectory (va("%s/hipnotic", basedir) );
-	if (COM_CheckParm ("-qurok"))
+	if (COM_CheckParm ("-kurok"))
 		COM_AddGameDirectory (va("%s/kurok", basedir) );
 
 //

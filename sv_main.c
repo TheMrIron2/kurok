@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sv_main.c -- server main program
 
 #include "quakedef.h"
-#include "alpha.h"
+
 server_t		sv;
 server_static_t	svs;
 
@@ -505,18 +505,6 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (ent->baseline.modelindex != ent->v.modelindex)
 			bits |= U_MODEL;
 
-                // Nehahra: Model Alpha
-                {
-                 eval_t  *val;
-                 if (val = GetEdictFieldValue(ent, "alpha"))
-                  alpha=val->_float;
-                 else
-                  alpha=1;
-
-                 if ((alpha < 1) && (alpha > 0))
-                  bits |= U_TRANS;
-                }
-
 		if (e >= 256)
 			bits |= U_LONGENTITY;
 			
@@ -557,10 +545,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			MSG_WriteCoord (msg, ent->v.origin[2]);
 		if (bits & U_ANGLE3)
 			MSG_WriteAngle(msg, ent->v.angles[2]);
-                if (bits & U_TRANS) {
-                        MSG_WriteFloat(msg, 2);
-                        MSG_WriteFloat(msg, alpha);
-                }
+
 	}
 }
 

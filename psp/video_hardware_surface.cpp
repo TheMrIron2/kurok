@@ -374,7 +374,7 @@ static inline void DrawGLPolyLM (glpoly_t *p)
 
 	const int				unclipped_vertex_count	= p->numverts;
 	const glvert_t* const	unclipped_vertices		= &(p->verts[p->numverts]);
-	
+
 	if (clipping::is_clipping_required(
 		unclipped_vertices,
 		unclipped_vertex_count))
@@ -405,7 +405,7 @@ static inline void DrawGLPolyLM (glpoly_t *p)
 	}
 	else
 	{
-	
+
 		// Draw the poly directly.
 		sceGuDrawArray(
 			GU_TRIANGLE_FAN,
@@ -419,6 +419,7 @@ static inline void DrawGLPoly (glpoly_t *p)
 	// Does this poly need clipped?
 	const int				unclipped_vertex_count	= p->numverts;
 	const glvert_t* const	unclipped_vertices		= p->verts;
+
 	if (clipping::is_clipping_required(
 		unclipped_vertices,
 		unclipped_vertex_count))
@@ -613,6 +614,44 @@ void R_RenderBrushPoly (msurface_t *fa)
 
 	if (fa->flags & SURF_UNDERWATER)
 		DrawGLWaterPoly (fa->polys);
+
+	else if (!Q_strncmp(fa->texinfo->texture->name,"metal",5))
+	{
+		if (kurok)
+			EmitReflectivePolys (fa);
+		else
+            DrawGLPoly (fa->polys);
+	}
+	else if (!Q_strncmp(fa->texinfo->texture->name,"glass",5))
+	{
+		if (kurok)
+		{
+			sceGuEnable (GU_BLEND);
+			sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
+
+			EmitReflectivePolys (fa);
+
+			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+			sceGuDisable (GU_BLEND);
+		}
+		else
+			DrawGLPoly (fa->polys);
+	}
+	else if (!Q_strncmp(fa->texinfo->texture->name,"alpha",5))
+	{
+		if (kurok)
+		{
+			sceGuEnable (GU_BLEND);
+			sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
+
+			DrawGLPoly (fa->polys);
+
+			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+			sceGuDisable (GU_BLEND);
+		}
+		else
+            DrawGLPoly (fa->polys);
+	}
 	else
 		DrawGLPoly (fa->polys);
 
@@ -821,6 +860,61 @@ void R_DrawWaterSurfaces (void)
 
 /*
 ================
+R_DrawGlassSurfaces
+================
+*/
+/*
+void R_DrawGlassSurfaces (void)
+{
+	int			i;
+	msurface_t	*s;
+	texture_t	*t;
+
+	//
+	// go back to the world matrix
+	//
+
+	sceGumMatrixMode(GU_VIEW);
+	sceGumLoadMatrix(&r_world_matrix);
+	sceGumUpdateMatrix();
+
+	sceGumMatrixMode(GU_MODEL);
+
+	sceGuEnable (GU_BLEND);
+	sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
+	sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
+
+	// identify sky texture
+	skytexturenum = -1;
+	mirrortexturenum = -1;
+	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+	{
+		if (!cl.worldmodel->textures[i])
+			continue;
+		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"sky",3) )
+			skytexturenum = i;
+		if(!kurok)
+		{
+			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"window02_1",10) )
+				mirrortexturenum = i;
+		}
+		else
+		{
+			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"glass",10) )
+				mirrortexturenum = i;
+		}
+ 		cl.worldmodel->textures[i]->texturechain = NULL;
+	}
+
+	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
+	sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+	sceGuColor (GU_RGBA(0xff, 0xff, 0xff, 0xff));
+	sceGuDisable (GU_BLEND);
+}
+*/
+
+/*
+================
 DrawTextureChains
 ================
 */
@@ -873,9 +967,6 @@ static void DrawTextureChains (void)
 R_DrawBrushModel
 =================
 */
-
-extern float model_alpha;
-
 void R_DrawBrushModel (entity_t *e)
 {
 	int			j, k;
@@ -891,10 +982,6 @@ void R_DrawBrushModel (entity_t *e)
 	currenttexture = -1;
 
 	clmodel = e->model;
-
-	model_alpha = currententity->transparency;
-	if (model_alpha == 0)
-		model_alpha = 1;
 
 	if (e->angles[0] || e->angles[1] || e->angles[2])
 	{
@@ -914,17 +1001,6 @@ void R_DrawBrushModel (entity_t *e)
 
 	if (R_CullBox (mins, maxs))
 		return;
-
-    if (model_alpha != 1)   // Nehahra - Model_Alpha
-	{
-         sceGuEnable(GU_BLEND);
-         sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
-		 sceGuColor(GU_COLOR(1.0f, 1.0f, 1.0f, model_alpha));
-//         gl_texsort.value = true;
-	}
-	else
-         sceGuColor(0xffffffff);
-        // Nehahra - End
 
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
 
@@ -989,11 +1065,6 @@ void R_DrawBrushModel (entity_t *e)
 
 	sceGumPopMatrix();
 	sceGumUpdateMatrix();
-
-	if (model_alpha != 1)
-	{
-		sceGuDisable(GU_BLEND);
-	}
 }
 
 /*
@@ -1105,7 +1176,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				/*if (gl_texsort.value)*/
 				{
 					if (!mirror
-					|| surf->texinfo->texture != cl.worldmodel->textures[mirrortexturenum])
+					|| surf->texinfo->texture != cl.worldmodel->textures[mirrortexturenum] || !Q_strncmp(surf->texinfo->texture->name,"glass",5))
 					{
 						surf->texturechain = surf->texinfo->texture->texturechain;
 						surf->texinfo->texture->texturechain = surf;
