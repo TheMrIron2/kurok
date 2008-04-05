@@ -4,8 +4,8 @@ VALID_VIDEOS	= SOFTWARE HARDWARE
 VIDEO			= HARDWARE
 
 VAILD_MP3LIBS   = MP3SOFTWARE MP3HARDWARE
-#MP3LIB          = MP3HARDWARE
-MP3LIB          = MP3SOFTWARE
+MP3LIB          = MP3HARDWARE
+#MP3LIB          = MP3SOFTWARE
 
 MODEL_N=-DNORMAL_MODEL
 #MODEL_S=-DSLIM_MODEL
@@ -58,7 +58,6 @@ COMMON_OBJS = \
 	$(OBJ_DIR)/psp/gethost.o \
 	$(OBJ_DIR)/psp/fnmatch.o \
 	\
-	$(OBJ_DIR)/alpha.o \
 	$(OBJ_DIR)/chase.o \
 	$(OBJ_DIR)/cl_demo.o \
 	$(OBJ_DIR)/cl_input.o \

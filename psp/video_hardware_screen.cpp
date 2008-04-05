@@ -918,7 +918,7 @@ void SCR_UpdateScreen (void)
 		
 		SCR_DrawConsole ();
 
-//		if (qurok)
+//		if (kurok)
 //            SCR_DrawLoadScreen();
 
 		M_Draw ();

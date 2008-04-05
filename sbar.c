@@ -261,7 +261,7 @@ Sbar_DrawPic
 */
 void Sbar_DrawPic (int x, int y, qpic_t *pic)
 {
-  if(qurok)
+  if(kurok)
   		Draw_Pic (x /* + ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
   else
   {
@@ -279,7 +279,7 @@ Sbar_DrawTransPic
 */
 void Sbar_DrawTransPic (int x, int y, qpic_t *pic)
 {
-  if(qurok)
+  if(kurok)
   		Draw_TransPic (x /*+ ((vid.width - 320)>>1)*/, y + (vid.height-SBAR_HEIGHT), pic);
   else
   {
@@ -299,7 +299,7 @@ Draws one solid graphics character
 */
 void Sbar_DrawCharacter (int x, int y, int num)
 {
-  if(qurok)
+  if(kurok)
 		Draw_Character ( x /*+ ((vid.width - 320)>>1) */ + 4 , y + vid.height-SBAR_HEIGHT, num);
   else
   {
@@ -317,7 +317,7 @@ Sbar_DrawString
 */
 void Sbar_DrawString (int x, int y, char *str)
 {
-  if(qurok)
+  if(kurok)
 		Draw_String (x /*+ ((vid.width - 320)>>1)*/, y + vid.height-SBAR_HEIGHT, str);
   else
   {
@@ -410,7 +410,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color)
 		
     if (l < digits)
     {
-        if (qurok)
+        if (kurok)
 	        x += (digits-l)*16;
         else
             x += (digits-l)*24;
@@ -425,7 +425,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color)
 
 		Sbar_DrawTransPic (x,y,sb_nums[color][frame]);
         
-        if (qurok)
+        if (kurok)
 		    x += 16;
 		else
 		    x += 24;
@@ -553,13 +553,13 @@ void Sbar_SoloScoreboard (void)
 	int		minutes, seconds, tens, units;
 	int		len;
 
-	if(qurok)
+	if(kurok)
 		sprintf (str,"Enemies :%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	else
 		sprintf (str,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	Sbar_DrawString (8, 4, str);
 
-	if(qurok)
+	if(kurok)
 		sprintf (str,"Objectives :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 	else
 		sprintf (str,"Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
@@ -667,17 +667,11 @@ void Sbar_DrawInventory (void)
 		else
 			Sbar_DrawPic (0, -24, rsb_invbar[1]);
 	}
-	else if (qurok)
-	{
-	}
-    else
+	else if (!kurok)
 		Sbar_DrawPic (0, -24, sb_ibar);
 
 // weapons
-    if (qurok)
-	{
-	}
-    else
+    if (!kurok)
     {
 	for (i=0 ; i<7 ; i++)
 	{
@@ -774,9 +768,7 @@ void Sbar_DrawInventory (void)
 		}
 	}
 
-    if (qurok)
-    {}
-    else
+    if (!kurok)
     {
 // ammo counts
 	for (i=0 ; i<4 ; i++)
@@ -899,7 +891,7 @@ void Sbar_DrawFrags (void)
 
 	x = 23;
 	
-    if (qurok)
+    if (kurok)
     {
 		xofs = 0;
     }
@@ -977,7 +969,7 @@ void Sbar_DrawFace (void)
 		top = Sbar_ColorForMap (top);
 		bottom = Sbar_ColorForMap (bottom);
 		
-		if (qurok)
+		if (kurok)
 		{
 			xofs = 113;
         }
@@ -1017,18 +1009,13 @@ void Sbar_DrawFace (void)
 	}
 // PGM 01/19/97 - team color drawing
 
-    if (qurok)
-    {
-//        if (cl.stats[STAT_ARMOR] >= 1)
-//        return;
-    }
-    else
+    if (!kurok)
     {
     
 	if ( (cl.items & (IT_INVISIBILITY | IT_INVULNERABILITY) )
 	== (IT_INVISIBILITY | IT_INVULNERABILITY) )
 	{	
-        if (qurok)
+        if (kurok)
 		    Sbar_DrawPic (8, 0, sb_face_invis_invuln);
 		else
 		    Sbar_DrawPic (112, 0, sb_face_invis_invuln);
@@ -1036,7 +1023,7 @@ void Sbar_DrawFace (void)
 	}
 	if (cl.items & IT_QUAD)
 	{
-        if (qurok)
+        if (kurok)
 		    Sbar_DrawPic (8, 0, sb_face_quad );
         else
 		    Sbar_DrawPic (112, 0, sb_face_quad );
@@ -1044,7 +1031,7 @@ void Sbar_DrawFace (void)
 	}
 	if (cl.items & IT_INVISIBILITY)
 	{
-        if (qurok)
+        if (kurok)
 		    Sbar_DrawPic (8, 0, sb_face_invis );
         else
 		    Sbar_DrawPic (112, 0, sb_face_invis );
@@ -1052,7 +1039,7 @@ void Sbar_DrawFace (void)
 	}
 	if (cl.items & IT_INVULNERABILITY)
 	{
-        if (qurok)
+        if (kurok)
 		    Sbar_DrawPic (8, 0, sb_face_invuln);
         else
 		    Sbar_DrawPic (112, 0, sb_face_invuln);
@@ -1073,7 +1060,7 @@ void Sbar_DrawFace (void)
 	else
 		anim = 0;
 
-    if (qurok)
+    if (kurok)
 	    Sbar_DrawPic (8, 0, sb_faces[2][0]);
 	else
 	    Sbar_DrawPic (112, 0, sb_faces[f][anim]);
@@ -1095,10 +1082,7 @@ void Sbar_Draw (void)
     if (scr_viewsize.value == 130)
         return;
 
-    if (qurok)
-    {
-    }
-    else
+    if (!kurok)
     {
 	    if (sb_updates >= vid.numpages)
 		   return;
@@ -1110,7 +1094,7 @@ void Sbar_Draw (void)
 	if (sb_lines && vid.width > 320) 
 		Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
 
-    if (qurok)
+    if (kurok)
     {
 	    if (sb_lines > 0)
 	    {
@@ -1156,7 +1140,7 @@ void Sbar_Draw (void)
     
 	if (sb_showscores || cl.stats[STAT_HEALTH] <= 0)
 	{
-		if(!qurok)
+		if(!kurok)
 			Sbar_DrawPic (0, 0, sb_scorebar);
 		Sbar_DrawScoreboard ();
 		sb_updates = 0;
@@ -1165,11 +1149,7 @@ void Sbar_Draw (void)
 	else if (sb_lines >= 0)
 	{
 			
-    if (qurok)
-    {
-//	    Sbar_DrawPic (0, 0, sb_sbar);
-    }
-    else
+    if (!kurok)
     {
         if (sb_lines >= 24)
             Sbar_DrawPic (0, 0, sb_sbar);
@@ -1206,7 +1186,7 @@ void Sbar_Draw (void)
 				else if (cl.items & RIT_ARMOR1)
 					Sbar_DrawPic (0, 0, sb_armor[0]);
 			}
-			else if (qurok)
+			else if (kurok)
 			{
 				if (cl.items & IT_ARMOR3)
 					Sbar_DrawPic (8, -16, sb_armor[2]);
@@ -1249,7 +1229,7 @@ void Sbar_Draw (void)
 			else if (cl.items & RIT_MULTI_ROCKETS)
 				Sbar_DrawPic (224, 0, rsb_ammo[2]);
 		}
-		else if (qurok)
+		else if (kurok)
 		{
             if (!cl_gunpitch.value)
             {
@@ -1279,7 +1259,7 @@ void Sbar_Draw (void)
         {}
         else
         {
-            if (qurok)
+            if (kurok)
                 Sbar_DrawNum2 (24, -16, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
             else
                 Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
@@ -1289,7 +1269,7 @@ void Sbar_Draw (void)
         {}
         else
         {
-             if (qurok)
+             if (kurok)
              {
              //   if (cl.stats[STAT_ARMOR] >= 1)
              //   {}
@@ -1300,7 +1280,7 @@ void Sbar_Draw (void)
              Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
         }
 
-        if (qurok)
+        if (kurok)
         {
             if (!cl_gunpitch.value)
             {

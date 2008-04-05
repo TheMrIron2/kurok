@@ -194,6 +194,7 @@ void GL_Set2D (void);
 void GL_SubdivideSurface (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa);
+void EmitReflectivePolys (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void R_DrawSkyChain (msurface_t *s);
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);

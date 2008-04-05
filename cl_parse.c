@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_parse.c  -- parse a message received from the server
 
 #include "quakedef.h"
-#include "alpha.h"
 
 extern 	cvar_t	bgmtype;
 
@@ -471,13 +470,6 @@ if (bits&(1<<i))
 		ent->msg_angles[0][2] = MSG_ReadAngle();
 	else
 		ent->msg_angles[0][2] = ent->baseline.angles[2];
-
-        if (bits & U_TRANS) {
-           int temp = MSG_ReadFloat();
-           ent->transparency = MSG_ReadFloat();
-        } else {
-           ent->transparency = 1.0;
-        }
 
 	if ( bits & U_NOLERP )
 		ent->forcelink = true;

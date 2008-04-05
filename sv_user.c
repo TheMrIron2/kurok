@@ -260,7 +260,7 @@ void SV_WaterMove (void)
 
 	if (!cmd.forwardmove && !cmd.sidemove && !cmd.upmove)
 	{
-        if (!qurok)
+        if (!kurok)
 		    wishvel[2] -= 60;		// drift towards bottom
     }
 	else

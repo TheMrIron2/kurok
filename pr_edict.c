@@ -1058,7 +1058,6 @@ void PR_LoadProgs (void)
 	for (i=0 ; i<progs->numglobals ; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
-        FindEdictFieldOffsets(); // Nehahra - Locate fields
 }
 
 

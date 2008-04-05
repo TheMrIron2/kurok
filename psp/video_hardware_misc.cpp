@@ -79,6 +79,26 @@ byte	dottexture[8][8] =
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0},
 };
+
+void R_InitParticleTexture (void)
+{
+	int		x,y;
+	byte	data[8][8][2];
+
+	//
+	// particle texture
+	//
+
+	for (x=0 ; x<8 ; x++)
+	{
+		for (y=0 ; y<8 ; y++)
+		{
+			data[y][x][0] = (dottexture[x][y])*0xF0 | (dottexture[x][y])*0x0F;
+			data[y][x][1] = (dottexture[x][y])*0xF0 | (dottexture[x][y])*0x0F;
+		}
+	}
+	particletexture = GL_LoadTextureLM ("_particle_", 8, 8, &data[0][0][0], 2, GU_LINEAR, qtrue);
+}
 */
 byte	dottexture2[16][16] =
 {
@@ -445,8 +465,16 @@ void R_NewMap (void)
 			continue;
 		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"sky",3) )
 			skytexturenum = i;
-		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"window02_1",10) )
-			mirrortexturenum = i;
+	  	if(!kurok)
+		{
+			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"window02_1",10) )
+				mirrortexturenum = i;
+		}
+	  	else
+		{
+			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"glass",5) )
+				mirrortexturenum = i;
+		}
  		cl.worldmodel->textures[i]->texturechain = NULL;
 	}
 #ifdef QUAKE2
