@@ -61,8 +61,11 @@ int			mirrortexturenum;	// quake texturenum, not gltexturenum
 qboolean	mirror;
 mplane_t	*mirror_plane;
 
+bool	force_fullbright;
 bool    additive;
 bool    filter;
+bool    alphafunc;
+bool    fixlight;
 
 //
 // view origin
@@ -88,32 +91,34 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 void R_MarkLeaves (void);
 
-cvar_t  r_skybox = {"r_skybox", "0", qtrue};
-cvar_t	r_norefresh = {"r_norefresh","0"};
-cvar_t	r_drawentities = {"r_drawentities","1"};
-cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};
-cvar_t	r_speeds = {"r_speeds","0"};
-cvar_t	r_fullbright = {"r_fullbright","0"};
-cvar_t	r_lightmap = {"r_lightmap","0"};
-cvar_t	r_shadows = {"r_shadows","0"};
-cvar_t	r_mirroralpha = {"r_mirroralpha","1"};
-cvar_t	r_wateralpha = {"r_wateralpha","0.6"};
-cvar_t	r_mipmaps = {"r_mipmaps","0",qtrue};
-cvar_t	r_mipmaps_func = {"r_mipmaps_func","0",qtrue};
-cvar_t	r_mipmaps_bias = {"r_mipmaps_bias","-4.5",qtrue};
-cvar_t	r_dynamic = {"r_dynamic","1", qtrue};
-cvar_t	r_novis = {"r_novis","0"};
-cvar_t	r_tex_scale_down = {"r_tex_scale_down","0", qtrue};
-cvar_t	r_particles_simple = {"r_particles_simple","0", qtrue};
-cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};
-cvar_t	r_vsync = {"r_vsync","0", qtrue};
-cvar_t	r_dithering = {"r_dithering","0", qtrue};
-cvar_t	r_antialias = {"r_antialias","0", qtrue};
-cvar_t	r_test = {"r_test","0", qtrue};
+cvar_t  r_skyclip = {"r_skyclip", "0", qtrue}; 					// Toggle auto clipping sky polys
+cvar_t	r_norefresh = {"r_norefresh","0"};      				// Unknown
+cvar_t	r_drawentities = {"r_drawentities","1"}; 				// Toggle entity drawing
+cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};              // Toggle view model drawing
+cvar_t	r_speeds = {"r_speeds","0"};                            // Toggle speed statistical display
+cvar_t	r_fullbright = {"r_fullbright","0"};                    // Toggle fullbright world and entities
+cvar_t	r_lightmap = {"r_lightmap","0"};                        // Toggle drawing of lightmaps only
+cvar_t	r_shadows = {"r_shadows","0"};                          // Toggle fake stencil shadows for entities
+cvar_t	r_mirroralpha = {"r_mirroralpha","1"};                  // Adjust alpha value of mirror textures (not functional)
+cvar_t	r_glassalpha = {"r_glassalpha","0.25"};                 // Adjust alpha value of glass textures
+cvar_t	r_wateralpha = {"r_wateralpha","0.6"};                  // Adjust alpha value of liquid textures
+cvar_t	r_mipmaps = {"r_mipmaps","0",qtrue};                    // Toggle mip map optimising
+cvar_t	r_mipmaps_func = {"r_mipmaps_func","2",qtrue};          // Adjust mip map calculations
+cvar_t	r_mipmaps_bias = {"r_mipmaps_bias","-7",qtrue};         // Adjust mip map bias level
+cvar_t	r_dynamic = {"r_dynamic","1", qtrue};                   // Toggle lightmap dynamic lighting
+cvar_t	r_novis = {"r_novis","0"};                              // Toggle visibility calculations
+cvar_t	r_tex_scale_down = {"r_tex_scale_down","0", qtrue};     // Toggle odd texture size resolution down scaling
+cvar_t	r_particles_simple = {"r_particles_simple","0", qtrue}; // Toggle classic particle effect
+cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","0"};          // Unknown
+cvar_t	r_vsync = {"r_vsync","0", qtrue};                       // Toggle V-Sync
+cvar_t	r_dithering = {"r_dithering","0", qtrue};               // Toggle hardware color dithering
+cvar_t	r_antialias = {"r_antialias","0", qtrue};               // Toggle fake anti alias effect
+cvar_t	r_menufade = {"r_menufade","0.5", qtrue}; 				// Adjust menu background alpha
+cvar_t	r_test = {"r_test","0", qtrue}; 						// developer temp test cvar
 
-cvar_t  r_i_model_animation = { "r_i_model_animation", "1", qtrue};
-cvar_t  r_i_model_transform = { "r_i_model_transform", "1", qtrue};
-cvar_t  r_model_contrast = { "r_model_contrast", "0", qtrue};
+cvar_t  r_i_model_animation = { "r_i_model_animation", "1", qtrue}; // Toggle smooth model animation
+cvar_t  r_i_model_transform = { "r_i_model_transform", "1", qtrue}; // Toggle smooth model movement
+cvar_t  r_model_contrast = { "r_model_contrast", "0", qtrue};       // Toggle high contrast model lighting
 
 /*
 cvar_t	gl_finish = {"gl_finish","0"};
@@ -405,20 +410,22 @@ void R_DrawSpriteModel (entity_t *e)
 	// Bind the texture.
 	GL_Bind(frame->gl_texturenum);
 
+	sceGuEnable(GU_ALPHA_TEST);
 	sceGuEnable(GU_BLEND);
 	sceGuDisable(GU_FOG);
-	sceGuDepthMask(GU_TRUE);
-
-	sceGuEnable(GU_ALPHA_TEST);
-    sceGuAlphaFunc(GU_GREATER, 0, 0xff);
+   	sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 
     if (additive)
+	{
+		sceGuDepthMask(GU_TRUE);
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
+		sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
+	}
     else if (filter)
 	{
+		sceGuDepthMask(GU_TRUE);
 		sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_SRC_COLOR, GU_FIX, 0, 0xFFFFFFFF);
-//		sceGuBlendFunc(GU_ADD, GU_ONE_MINUS_SRC_COLOR, GU_FIX , 0, 0xFFFFFFFF);
-//		sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
+        sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
 	}
 	else
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
@@ -430,11 +437,6 @@ void R_DrawSpriteModel (entity_t *e)
 	VectorMA (e->origin, frame->down, s_up, point);
 	VectorMA (point, frame->left, s_right, point);
 
-	/*
-	glTexCoord2f (0, 1);
-	glVertex3fv (point);
-	*/
-
 	vertices[0].st[0]	= 0.0f;
 	vertices[0].st[1]	= 1.0f;
 	vertices[0].xyz[0]	= point[0];
@@ -443,11 +445,6 @@ void R_DrawSpriteModel (entity_t *e)
 
 	VectorMA (e->origin, frame->up, s_up, point);
 	VectorMA (point, frame->left, s_right, point);
-
-	/*
-	glTexCoord2f (0, 0);
-	glVertex3fv (point);
-	*/
 
 	vertices[1].st[0]	= 0.0f;
 	vertices[1].st[1]	= 0.0f;
@@ -458,11 +455,6 @@ void R_DrawSpriteModel (entity_t *e)
 	VectorMA (e->origin, frame->up, s_up, point);
 	VectorMA (point, frame->right, s_right, point);
 
-	/*
-	glTexCoord2f (1, 0);
-	glVertex3fv (point);
-	*/
-
 	vertices[2].st[0]	= 1.0f;
 	vertices[2].st[1]	= 0.0f;
 	vertices[2].xyz[0]	= point[0];
@@ -472,20 +464,11 @@ void R_DrawSpriteModel (entity_t *e)
 	VectorMA (e->origin, frame->down, s_up, point);
 	VectorMA (point, frame->right, s_right, point);
 
-	/*
-	glTexCoord2f (1, 1);
-	glVertex3fv (point);
-	*/
-
 	vertices[3].st[0]	= 1.0f;
 	vertices[3].st[1]	= 1.0f;
 	vertices[3].xyz[0]	= point[0];
 	vertices[3].xyz[1]	= point[1];
 	vertices[3].xyz[2]	= point[2];
-
-	/*
-	glEnd ();
-	*/
 
 	// Draw the clipped vertices.
 	sceGuDrawArray(
@@ -493,20 +476,12 @@ void R_DrawSpriteModel (entity_t *e)
 		GU_TEXTURE_32BITF | GU_VERTEX_32BITF,
 		4, 0, vertices);
 
-	/*
-	glDisable (GL_ALPHA_TEST);
-	*/
-
-	if (additive || filter)
-		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-	else
-		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
-
 	sceGuDisable(GU_ALPHA_TEST);
-
+	sceGuDepthMask(GU_FALSE);
 	sceGuDisable(GU_BLEND);
 	sceGuEnable(GU_FOG);
-	sceGuDepthMask(GU_FALSE);
+	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
+	sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 }
 
 /*
@@ -527,7 +502,6 @@ float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 
 vec3_t	shadevector;
 float	shadelight, ambientlight;
-bool force_fullbright;
 
 // precalculated dot products for quantized angles
 #define SHADEDOT_QUANT 16
@@ -664,15 +638,13 @@ void GL_DrawAliasBlendedFrame (aliashdr_t *paliashdr, int pose1, int pose2, floa
 	lastposenum0 = pose1;
 	lastposenum  = pose2;
         
-	verts1  = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-	verts2  = verts1;
+	verts1 = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+	verts2 = verts1;
 
 	verts1 += pose1 * paliashdr->poseverts;
 	verts2 += pose2 * paliashdr->poseverts;
 
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
-
-//  sceGuEnable(GU_BLEND);
 
 	for (;;)
     {
@@ -685,12 +657,10 @@ void GL_DrawAliasBlendedFrame (aliashdr_t *paliashdr, int pose1, int pose2, floa
 		if (count < 0)
         {
 			count = -count;
-//          glBegin (GL_TRIANGLE_FAN);
 			prim = GU_TRIANGLE_FAN;
 		}
 		else
 		{
-//          glBegin (GL_TRIANGLE_STRIP);
 			prim = GU_TRIANGLE_STRIP;
 		}
            
@@ -773,13 +743,12 @@ void GL_DrawAliasBlendedFrame (aliashdr_t *paliashdr, int pose1, int pose2, floa
 			verts2++;
 		}
 
-		sceGuColor((int)verts1);
-		sceGuColor((int)verts2);
+//		sceGuColor((int)verts1);
+//		sceGuColor((int)verts2);
 //		sceGuDrawArray(prim, GU_TEXTURE_32BITF | GU_VERTEX_32BITF, count, 0, out);
 		sceGuDrawArray(prim, GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_COLOR_8888, count, 0, out);
 	}
 	sceGuColor(0xffffffff);
-//	sceGuDisable(GU_BLEND);
 }
 
 /*
@@ -942,22 +911,26 @@ R_DrawAliasModel
 */
 void R_DrawAliasModel (entity_t *e)
 {
-	int			i;//, j;
+	int			i, j;
 	int			lnum;
 	vec3_t		dist;
 	float		add;
 	model_t		*clmodel;
 	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
-//	trivertx_t	*verts, *v;
-//	int			index;
-	float		an;//, s, t;
+	trivertx_t	*verts, *v;
+	int			index;
+	float		an, s, t;
 	int			anim;
 
 //	float		radiusmax = 0.0;
 
 	force_fullbright = false;
 	additive = false;
+	filter = false;
+	alphafunc = false;
+	fixlight = false;
+
 	clmodel = currententity->model;
 
 	VectorAdd (currententity->origin, clmodel->mins, mins);
@@ -1036,8 +1009,8 @@ void R_DrawAliasModel (entity_t *e)
         force_fullbright = false;
 
 	// ZOID: never allow players to go totally black
-	i = currententity - cl_entities;
-	if (i >= 1 && i<=cl.maxclients /*&& !strcmp (currententity->model->name, "progs/player.mdl") */)
+//	i = currententity - cl_entities;
+//	if (i >= 1 && i<=cl.maxclients /*&& !strcmp (currententity->model->name, "progs/player.mdl") */)
 		if (ambientlight < 16)
 			ambientlight = shadelight = 16;
 
@@ -1046,8 +1019,7 @@ void R_DrawAliasModel (entity_t *e)
 	    !strcmp (clmodel->name, "progs/flame.mdl") ||
 	    !strcmp (clmodel->name, "progs/k_spike.mdl") ||
 	    !strcmp (clmodel->name, "progs/s_spike.mdl") ||
-	    !strcmp (clmodel->name, "progs/spike.mdl") ||
-	    !strcmp (clmodel->name, "progs/title.mdl")) 
+	    !strcmp (clmodel->name, "progs/spike.mdl")) 
 	{
 		ambientlight = shadelight = 256;
 		force_fullbright = true;
@@ -1060,30 +1032,69 @@ void R_DrawAliasModel (entity_t *e)
 	    !strcmp (clmodel->name, "progs/bolt3.mdl") ||
 	    !strcmp (clmodel->name, "progs/s_light.mdl") ||
 	    !strcmp (clmodel->name, "progs/bullet.mdl") ||
+	    !strcmp (clmodel->name, "progs/explode.mdl") ||
 	    !strcmp (clmodel->name, "progs/blaser.mdl") ||
 	    !strcmp (clmodel->name, "progs/laser.mdl"))
 	{
 		additive = true;
 	}
 
-// light lerping - pox@planetquake.com
+	if (!strcmp (clmodel->name, "progs/smoke.mdl") ||
+	    !strcmp (clmodel->name, "progs/debris.mdl"))
+	{
+		filter = true;
+	}
 
-//shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+	if (!strcmp (clmodel->name, "progs/raptor.mdl") ||
+	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush1.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush2.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush3.mdl"))
+	{
+		alphafunc = true;
+	}
+
+	if (!strcmp (clmodel->name, "progs/raptor.mdl") ||
+	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_axe.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_axea.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_bow.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_tekbow.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_shot.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_shot2.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_nail.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_nail2.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_rock.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_rock2.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_light.mdl") ||
+	    !strcmp (clmodel->name, "progs/v_uzi.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush.mdl") ||
+	    !strcmp (clmodel->name, "progs/title.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush1.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush2.mdl") ||
+	    !strcmp (clmodel->name, "progs/bush3.mdl"))
+	{
+		fixlight = true;
+	}
+
+	// light lerping - pox@planetquake.com
+	//shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
     {
-    float ang_ceil, ang_floor;
+		float ang_ceil, ang_floor;
 
-    // add pitch angle so lighting changes when looking up/down (mainly for viewmodel)
-    lightlerpoffset = (e->angles[1]+e->angles[0]) * (SHADEDOT_QUANT / 360.0);
+		// add pitch angle so lighting changes when looking up/down (mainly for viewmodel)
+    	lightlerpoffset = (e->angles[1]+e->angles[0]) * (SHADEDOT_QUANT / 360.0);
 
-    ang_ceil = ceil(lightlerpoffset);
-    ang_floor = floor(lightlerpoffset);
+	    ang_ceil = ceil(lightlerpoffset);
+    	ang_floor = floor(lightlerpoffset);
 
-    lightlerpoffset = ang_ceil - lightlerpoffset;
+    	lightlerpoffset = ang_ceil - lightlerpoffset;
 
-    shadedots = r_avertexnormal_dots[(int)ang_ceil & (SHADEDOT_QUANT - 1)];
-    shadedots2 = r_avertexnormal_dots[(int)ang_floor & (SHADEDOT_QUANT - 1)];
+		shadedots = r_avertexnormal_dots[(int)ang_ceil & (SHADEDOT_QUANT - 1)];
+		shadedots2 = r_avertexnormal_dots[(int)ang_floor & (SHADEDOT_QUANT - 1)];
     }
+
 	shadelight = shadelight / 200.0;
 	
     // light lerping - pox@planetquake.com
@@ -1100,31 +1111,27 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// locate the proper data
 	//
-	paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
 
+	paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
 	c_alias_polys += paliashdr->numtris;
 
 	//
 	// draw all the triangles
 	//
+
 	sceGumPushMatrix();
 
-	         // fenix@io.com: model transform interpolation
-    if (r_i_model_transform.value)
-           R_BlendedRotateForEntity (e);
-    else
-           R_RotateForEntity (e);
+	// fenix@io.com: model transform interpolation
 
-	const ScePspFVector3 translation =
-	{
-		paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]
-	};
+	if (r_i_model_transform.value)
+		R_BlendedRotateForEntity (e);
+	else
+		R_RotateForEntity (e);
+
+	const ScePspFVector3 translation = { paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] };
 	sceGumTranslate(&translation);
 
-	const ScePspFVector3 scaling =
-	{
-		paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]
-	};
+	const ScePspFVector3 scaling = { paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2] };
 	sceGumScale(&scaling);
 
 	anim = (int)(cl.time*10) & 3;
@@ -1132,20 +1139,12 @@ void R_DrawAliasModel (entity_t *e)
 
 	// we can't dynamically colormap textures, so they are cached
 	// seperately for the players.  Heads are just uncolored.
-	if (currententity->colormap != vid.colormap && 0/*!gl_nocolors.value*/)
+	if (currententity->colormap != vid.colormap && 0)
 	{
 		i = currententity - cl_entities;
-		if (i >= 1 && i<=cl.maxclients /* && !strcmp (currententity->model->name, "progs/player.mdl") */)
-		{
+		if (i >= 1 && i<=cl.maxclients)
 		    GL_Bind(playertextures - 1 + i);
-		}
 	}
-
-	sceGuEnable(GU_ALPHA_TEST);
-    sceGuAlphaFunc(GU_GREATER, 0, 0xff);
-
-	sceGuShadeModel(GU_SMOOTH);
-	sceGumUpdateMatrix();
 
 	if (force_fullbright)
 	{
@@ -1158,39 +1157,66 @@ void R_DrawAliasModel (entity_t *e)
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
 	}
-	else
+    else if (filter)
 	{
-        sceGuDisable(GU_BLEND);
+	    sceGuEnable(GU_BLEND);
+		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
+		sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_SRC_COLOR, GU_FIX, 0, 0xFFFFFFFF);
+	}
+	else if (alphafunc)
+	{
+		sceGuEnable(GU_ALPHA_TEST);
+		sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 		sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
-    }
+	}
+	else
+		sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
+
+	sceGuShadeModel(GU_SMOOTH);
+	sceGumUpdateMatrix();
 
     if (r_i_model_animation.value)
         R_SetupAliasBlendedFrame (currententity->frame, paliashdr, currententity);
     else
         R_SetupAliasFrame (currententity->frame, paliashdr);
 
-	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
+	if (fixlight) //Draws another pass, ouch!
+	{
+		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
+        sceGuEnable(GU_BLEND);
+//		sceGuDepthMask(GU_TRUE);
 
-	sceGuDisable(GU_ALPHA_TEST);
+	    if (r_i_model_animation.value)
+	        R_SetupAliasBlendedFrame (currententity->frame, paliashdr, currententity);
+	    else
+	        R_SetupAliasFrame (currententity->frame, paliashdr);
+
+		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+		sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
+        sceGuDisable(GU_BLEND);
+//		sceGuDepthMask(GU_FALSE);
+	}
+
+	if (force_fullbright || additive || filter || alphafunc)
+	{
+		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+		sceGuDisable(GU_BLEND);
+		sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
+		sceGuDisable(GU_ALPHA_TEST);
+	}
 
 	sceGuShadeModel(GU_FLAT);
 
 //	sceGuDisable(GU_LIGHTING);
-/*
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glPopMatrix ();
-*/
+
 	sceGumPopMatrix();
 	sceGumUpdateMatrix();
 
 	if (r_shadows.value)
-	{   /*
-		glPushMatrix ();
-		*/
-
+	{
 		sceGumPushMatrix();
 		R_RotateForEntity (e);
-		
+
 		/*
 		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_BLEND);
@@ -1225,18 +1251,6 @@ void R_DrawEntitiesOnList (void)
 	{
 		currententity = cl_visedicts[i];
 
-        if (currententity == &cl_entities[cl.viewentity]) 
-	    currententity->angles[0] *= 0.3;
-
-// Nehahra - Model_Alpha
-
-		if (currententity->transparency != 1 && currententity->transparency != 0)
-		{
-			currententity->transignore = false;//model_alpha
-			continue; // draw transparent entities last (?)
-		}
-// Nehahra - End
-
 		switch (currententity->model->type)
 		{
 		case mod_alias:
@@ -1263,76 +1277,6 @@ void R_DrawEntitiesOnList (void)
 			break;
 		}
 	}
-}
-
-// Nehahra - Model_Alpha (Function by FrikaC)
-/*
-=============
-R_DrawTransEntities
-=============
-*/
-void R_DrawTransEntities (void)
-{
-	// need to draw back to front
-	// fixme: this isn't my favorite option
-	int		i;
-	float bestdist, dist;
-	entity_t *bestent;
-	vec3_t start, test;
-
-	VectorCopy(r_refdef.vieworg, start);
-
-	if (!r_drawentities.value)
-		return;
-
-transgetent:
-	bestdist = 0;
-	for (i=0 ; i<cl_numvisedicts ; i++)
-	{
-		currententity = cl_visedicts[i];
-		if (currententity->transignore)
-			continue;
-		if (currententity->transparency == 1 || currententity->transparency ==0)
-			continue;
-
-		VectorCopy(currententity->origin, test);
-		if (currententity->model->type == mod_brush)
-		{
-			test[0] += currententity->model->mins[0];
-			test[1] += currententity->model->mins[1];
-			test[2] += currententity->model->mins[2];
-		}
-		dist = (((test[0] - start[0]) * (test[0] - start[0])) +
-			((test[1] - start[1]) * (test[1] - start[1])) +
-			((test[2] - start[2]) * (test[2] - start[2])));
-
-		if (dist > bestdist)
-		{
-			bestdist = dist;
-			bestent = currententity;
-
-		}
-	}
-	if (bestdist == 0)
-		return;
-	bestent->transignore = true;
-
-	currententity = bestent;
-	switch (currententity->model->type)
-	{
-	case mod_alias:
-//            R_DrawAliasModel (currententity, TRUE);
-			R_DrawAliasModel (currententity);
-		break;
-	case mod_brush:
-		R_DrawBrushModel (currententity);
-		break;
-	default:
-		break;
-	}
-
-	goto transgetent;
-
 }
 
 /*
@@ -1376,7 +1320,7 @@ void R_DrawViewModel (void)
 		VectorSubtract (currententity->origin, dl->origin, dist);
 		add = dl->radius - Length(dist);
 		if (add > 0)
-			ambientlight += add;
+			ambientlight += int(add);
 	}
 
 	ambient[0] = ambient[1] = ambient[2] = ambient[3] = (float)ambientlight;// / 128;
@@ -1596,8 +1540,8 @@ void R_SetupGL (void)
 			//variance should be a percentage of width, where width = 2 * tan(fov / 2)
 			//otherwise the effect is too dramatic at high FOV and too subtle at low FOV
 			//what a mess!
-			fovx = atan(tan(DEG2RAD(r_refdef.fov_x) / 2) * (0.97 + sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
-			fovy = atan(tan(DEG2RAD(r_refdef.fov_y) / 2) * (1.03 - sin(cl.time * 1.5) * 0.03)) * 2 / M_PI_DIV_180;
+			fovx = atan(tan(DEG2RAD(r_refdef.fov_x) / 2) * (0.97 + sin(cl.time * 2) * 0.03)) * 2 / M_PI_DIV_180;
+			fovy = atan(tan(DEG2RAD(r_refdef.fov_y) / 2) * (1.03 - sin(cl.time * 2) * 0.03)) * 2 / M_PI_DIV_180;
 
 			//old method where variance was a percentage of fov
 			//fovx = r_refdef.fov_x * (0.98 + sin(cl.time * 1.5) * 0.02);
@@ -1702,7 +1646,7 @@ void R_RenderScene (void)
 	// Set up fogging.
 
     if (r_refdef.fog_end == 0)
-        sceGuDisable ( GU_FOG );
+		r_refdef.fog_end = -1;
     else
     {
         sceGuEnable ( GU_FOG );
@@ -1722,8 +1666,6 @@ void R_RenderScene (void)
 	R_DrawWaterSurfaces ();
 
 	R_DrawParticles ();
-
-	sceGuDisable ( GU_FOG );
 
 #ifdef GLTEST
 	Test_Draw ();
@@ -1839,7 +1781,7 @@ void R_Fog_f (void)
 {
 	if (Cmd_Argc () == 1)
 	{
-		Con_Printf("\"fog\" is \"%i %i %i %i %i\"\n", r_refdef.fog_start, r_refdef.fog_end, r_refdef.fog_red, r_refdef.fog_green, r_refdef.fog_blue);
+		Con_Printf("\"fog\" is \"%f %f %f %f %f\"\n", r_refdef.fog_start, r_refdef.fog_end, r_refdef.fog_red, r_refdef.fog_green, r_refdef.fog_blue);
 		return;
 	}
 	r_refdef.fog_start = atof(Cmd_Argv(1));
@@ -1866,6 +1808,8 @@ void R_RenderView (void)
 	if (!r_worldentity.model || !cl.worldmodel)
 		Sys_Error ("R_RenderView: NULL worldmodel");
 
+	time1 = 0;
+
 	if (r_speeds.value)
 	{
 		/*glFinish ();*/
@@ -1883,8 +1827,6 @@ void R_RenderView (void)
 	R_RenderScene ();
 
 	R_DrawViewModel ();
-
-	R_DrawTransEntities();
 
 	// render mirror view
 //	R_Mirror ();

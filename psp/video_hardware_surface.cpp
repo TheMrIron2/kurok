@@ -83,7 +83,6 @@ void 	VID_SetPaletteLM();
 void 	VID_SetPaletteTX();
 // switch palette for textures
 
-
 /*
 ===============
 R_AddDynamicLights
@@ -99,7 +98,7 @@ void R_AddDynamicLights (msurface_t *surf)
 	int			i;
 	int			smax, tmax;
 	mtexinfo_t	*tex;
-    dlight_t *dl;
+//    dlight_t *dl;
 
 	smax = (surf->extents[0]>>4)+1;
 	tmax = (surf->extents[1]>>4)+1;
@@ -133,12 +132,12 @@ void R_AddDynamicLights (msurface_t *surf)
 		
 		for (t = 0 ; t<tmax ; t++)
 		{
-			td = local[1] - t*16;
+			td = int(local[1]) - t*16;
 			if (td < 0)
 				td = -td;
 			for (s=0 ; s<smax ; s++)
 			{
-				sd = local[0] - s*16;
+				sd = int(local[0]) - s*16;
 				if (sd < 0)
 					sd = -sd;
 				if (sd > td)
@@ -146,7 +145,7 @@ void R_AddDynamicLights (msurface_t *surf)
 				else
 					dist = td + (sd>>1);
 				if (dist < minlight)
-					blocklights[t*smax + s] += (rad - dist)*256;
+					blocklights[t*smax + s] += int((rad - dist))*256;
 /*
                 dl = &cl_dlights[lnum];
 
@@ -487,29 +486,29 @@ static void DrawGLWaterPoly (glpoly_t *p)
 #endif
 }
 
-static void DrawGLWaterPolyLightmap (glpoly_t *p)
-{
-	int		i;
-	const glvert_t	*v;
-	float	s, t, os, ot;
-	vec3_t	nv;
+//static void DrawGLWaterPolyLightmap (glpoly_t *p)
+//{
+//	int		i;
+//	const glvert_t	*v;
+//	float	s, t, os, ot;
+//	vec3_t	nv;
 
 	/*GL_DisableMultitexture();
 
 	glBegin (GL_TRIANGLE_FAN);*/
-	v = p->verts;
-	for (i=0 ; i<p->numverts ; i++, ++v)
-	{
+//	v = p->verts;
+//	for (i=0 ; i<p->numverts ; i++, ++v)
+//	{
 		/*glTexCoord2f (v[5], v[6]);*/
 
-		nv[0] = v->xyz[0] + 8*sinf(v->xyz[1]*0.05+realtime)*sinf(v->xyz[2]*0.05+realtime);
-		nv[1] = v->xyz[1] + 8*sinf(v->xyz[0]*0.05+realtime)*sinf(v->xyz[2]*0.05+realtime);
-		nv[2] = v->xyz[2];
+//		nv[0] = v->xyz[0] + 8*sinf(v->xyz[1]*0.05+realtime)*sinf(v->xyz[2]*0.05+realtime);
+//		nv[1] = v->xyz[1] + 8*sinf(v->xyz[0]*0.05+realtime)*sinf(v->xyz[2]*0.05+realtime);
+//		nv[2] = v->xyz[2];
 
 		/*glVertex3fv (nv);*/
-	}
+//	}
 	/*glEnd ();*/
-}
+//}
 
 
 /*
@@ -519,10 +518,10 @@ R_BlendLightmaps
 */
 static void R_BlendLightmaps (void)
 {
-	int			i, j;
+	int			i;//, j;
 	glpoly_t	*p;
-	const glvert_t	*v;
-	glRect_t	*theRect;
+//	const glvert_t	*v;
+//	glRect_t	*theRect;
 
 	if (r_fullbright.value)
 		return;
@@ -615,7 +614,7 @@ void R_RenderBrushPoly (msurface_t *fa)
 	if (fa->flags & SURF_UNDERWATER)
 		DrawGLWaterPoly (fa->polys);
 
-	else if (!Q_strncmp(fa->texinfo->texture->name,"metal",5))
+	else if (!Q_strncmp(fa->texinfo->texture->name,"env",3))
 	{
 		if (kurok)
 			EmitReflectivePolys (fa);
@@ -624,33 +623,52 @@ void R_RenderBrushPoly (msurface_t *fa)
 	}
 	else if (!Q_strncmp(fa->texinfo->texture->name,"glass",5))
 	{
-		if (kurok)
+        if (r_glassalpha.value < 1)
 		{
-			sceGuEnable (GU_BLEND);
-			sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
+			if (kurok)
+			{
+                float alpha1 = r_glassalpha.value;
+				float alpha2 = 1 - r_glassalpha.value;
 
-			EmitReflectivePolys (fa);
+				sceGuEnable (GU_BLEND);
+				sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(alpha1,alpha1,alpha1,alpha1), GU_COLOR(alpha2,alpha2,alpha2,alpha2));
 
-			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-			sceGuDisable (GU_BLEND);
+				EmitReflectivePolys (fa);
+
+				sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+				sceGuDisable (GU_BLEND);
+			}
+			else
+				DrawGLPoly (fa->polys);
 		}
 		else
-			DrawGLPoly (fa->polys);
+			if (kurok)
+				EmitReflectivePolys (fa);
+			else
+				DrawGLPoly (fa->polys);
 	}
 	else if (!Q_strncmp(fa->texinfo->texture->name,"alpha",5))
 	{
-		if (kurok)
+        if (r_glassalpha.value < 1)
 		{
-			sceGuEnable (GU_BLEND);
-			sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
+			if (kurok)
+			{
+                float alpha1 = r_glassalpha.value;
+				float alpha2 = 1 - r_glassalpha.value;
 
-			DrawGLPoly (fa->polys);
+				sceGuEnable (GU_BLEND);
+				sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(alpha1,alpha1,alpha1,alpha1), GU_COLOR(alpha2,alpha2,alpha2,alpha2));
 
-			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-			sceGuDisable (GU_BLEND);
+				DrawGLPoly (fa->polys);
+
+				sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+				sceGuDisable (GU_BLEND);
+			}
+			else
+	            DrawGLPoly (fa->polys);
 		}
 		else
-            DrawGLPoly (fa->polys);
+			DrawGLPoly (fa->polys);
 	}
 	else
 		DrawGLPoly (fa->polys);
@@ -705,7 +723,7 @@ Multitexture
 */
 void R_RenderDynamicLightmaps (msurface_t *fa)
 {
-	texture_t	*t;
+// texture_t	*t;
 	byte		*base;
 	int			maps;
 	glRect_t    *theRect;
@@ -781,44 +799,27 @@ void R_DrawWaterSurfaces (void)
 	msurface_t	*s;
 	texture_t	*t;
 
-	if (r_wateralpha.value == 1.0 /*&& gl_texsort.value*/)
+	if (r_wateralpha.value == 1.0)
 		return;
 	
 	float alpha1 = r_wateralpha.value;
 	float alpha2 = 1 - r_wateralpha.value;
-	
+
 	//
 	// go back to the world matrix
 	//
 
-    /*glLoadMatrixf (r_world_matrix);*/
 	sceGumMatrixMode(GU_VIEW);
 	sceGumLoadMatrix(&r_world_matrix);
 	sceGumUpdateMatrix();
-
 	sceGumMatrixMode(GU_MODEL);
 
-	if (r_wateralpha.value < 1.0) {
+	if (r_wateralpha.value < 1.0)
+	{
 		sceGuEnable (GU_BLEND);
 		sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
-		//sceGuBlendFunc(GU_ADD, GU_ONE_MINUS_DST_ALPHA, GU_ONE_MINUS_DST_ALPHA, 0, 0);
 		sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(alpha1,alpha1,alpha1,alpha1), GU_COLOR(alpha2,alpha2,alpha2,alpha2));
-		/*glEnable (GL_BLEND);
-		glColor4f (1,1,1,r_wateralpha.value);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);*/
 	}
-
-	/*if (!gl_texsort.value) {
-		if (!waterchain)
-			return;
-
-		for ( s = waterchain ; s ; s=s->texturechain) {
-			GL_Bind (s->texinfo->texture->gl_texturenum);
-			EmitWaterPolys (s);
-		}
-		
-		waterchain = NULL;
-	} else*/
 	{
 
 		for (i=0 ; i<cl.worldmodel->numtextures ; i++)
@@ -833,7 +834,6 @@ void R_DrawWaterSurfaces (void)
 				continue;
 
 			// set modulate mode explicitly
-			
 			GL_Bind (t->gl_texturenum);
 
 			for ( ; s ; s=s->texturechain)
@@ -849,69 +849,8 @@ void R_DrawWaterSurfaces (void)
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 		sceGuColor (GU_RGBA(0xff, 0xff, 0xff, 0xff));
 		sceGuDisable (GU_BLEND);
-		
-		/*glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-		glColor4f (1,1,1,1);
-		glDisable (GL_BLEND);*/
 	}
-
 }
-
-/*
-================
-R_DrawGlassSurfaces
-================
-*/
-/*
-void R_DrawGlassSurfaces (void)
-{
-	int			i;
-	msurface_t	*s;
-	texture_t	*t;
-
-	//
-	// go back to the world matrix
-	//
-
-	sceGumMatrixMode(GU_VIEW);
-	sceGumLoadMatrix(&r_world_matrix);
-	sceGumUpdateMatrix();
-
-	sceGumMatrixMode(GU_MODEL);
-
-	sceGuEnable (GU_BLEND);
-	sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
-	sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, GU_COLOR(0.5,0.5,0.5,0.5), GU_COLOR(0.5,0.5,0.5,0.5));
-
-	// identify sky texture
-	skytexturenum = -1;
-	mirrortexturenum = -1;
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
-	{
-		if (!cl.worldmodel->textures[i])
-			continue;
-		if (!Q_strncmp(cl.worldmodel->textures[i]->name,"sky",3) )
-			skytexturenum = i;
-		if(!kurok)
-		{
-			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"window02_1",10) )
-				mirrortexturenum = i;
-		}
-		else
-		{
-			if (!Q_strncmp(cl.worldmodel->textures[i]->name,"glass",10) )
-				mirrortexturenum = i;
-		}
- 		cl.worldmodel->textures[i]->texturechain = NULL;
-	}
-
-	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGB);
-	sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-	sceGuColor (GU_RGBA(0xff, 0xff, 0xff, 0xff));
-	sceGuDisable (GU_BLEND);
-}
-*/
 
 /*
 ================
@@ -969,9 +908,9 @@ R_DrawBrushModel
 */
 void R_DrawBrushModel (entity_t *e)
 {
-	int			j, k;
+	int			k;//j, k;
 	vec3_t		mins, maxs;
-	int			i, numsurfaces;
+	int			i;//, numsurfaces;
 	msurface_t	*psurf;
 	float		dot;
 	mplane_t	*pplane;
@@ -1082,13 +1021,13 @@ R_RecursiveWorldNode
 */
 void R_RecursiveWorldNode (mnode_t *node)
 {
-	int			i, c, side, *pindex;
-	vec3_t		acceptpt, rejectpt;
+	int			c, side;//, i, *pindex;
+//	vec3_t		acceptpt, rejectpt;
 	mplane_t	*plane;
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
-	float		d, dot;
-	vec3_t		mins, maxs;
+	float		dot;//, d;
+//	vec3_t		mins, maxs;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -1176,7 +1115,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 				/*if (gl_texsort.value)*/
 				{
 					if (!mirror
-					|| surf->texinfo->texture != cl.worldmodel->textures[mirrortexturenum] || !Q_strncmp(surf->texinfo->texture->name,"glass",5))
+					|| surf->texinfo->texture != cl.worldmodel->textures[mirrortexturenum])
 					{
 						surf->texturechain = surf->texinfo->texture->texturechain;
 						surf->texinfo->texture->texturechain = surf;
@@ -1209,7 +1148,7 @@ R_DrawWorld
 void R_DrawWorld (void)
 {
 	entity_t	ent;
-	int			i;
+//	int			i;
 
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -1297,7 +1236,7 @@ static int AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
-	int		bestx;
+//	int		bestx;
 	int		texnum;
 
 	for (texnum=0 ; texnum<MAX_LIGHTMAPS ; texnum++)
@@ -1347,14 +1286,14 @@ BuildSurfaceDisplayList
 */
 static void BuildSurfaceDisplayList (msurface_t *fa)
 {
-	int			i, lindex, lnumverts, s_axis, t_axis;
-	float		dist, lastdist, lzi, scale, u, v, frac;
-	unsigned	mask;
-	vec3_t		local, transformed;
+	int			i, lindex, lnumverts;//, s_axis, t_axis;
+//	float		dist, lastdist, lzi, scale, u, v, frac;
+//	unsigned	mask;
+//	vec3_t		local, transformed;
 	medge_t		*pedges, *r_pedge;
-	mplane_t	*pplane;
-	int			vertpage, newverts, newpage, lastvert;
-	qboolean	visible;
+//	mplane_t	*pplane;
+	int			vertpage;//, newverts, newpage, lastvert;
+//	qboolean	visible;
 	float		*vec;
 	float		s, t;
 	glpoly_t	*poly;
@@ -1434,7 +1373,7 @@ static void BuildSurfaceDisplayList (msurface_t *fa)
 		{
 			vec3_t v1, v2;
 			const glvert_t *prev, *this_, *next;
-			float f;
+//			float f;
 
 			prev = &poly->verts[(i + lnumverts - 1) % lnumverts];
 			this_ = &poly->verts[i];
@@ -1485,7 +1424,7 @@ GL_CreateSurfaceLightmap
 */
 static void GL_CreateSurfaceLightmap (msurface_t *surf)
 {
-	int		smax, tmax, s, t, l, i;
+	int		smax, tmax;//, s, t, l, i;
 	byte	*base;
 
 	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))
@@ -1530,6 +1469,8 @@ void GL_BuildLightmaps (void)
 			break;
 		if (m->name[0] == '*')
 			continue;
+//		else if (m->name[0] == 'glass')
+//			continue;
 		r_pcurrentvertbase = m->vertexes;
 		currentmodel = m;
 		for (i=0 ; i<m->numsurfaces ; i++)
@@ -1537,6 +1478,9 @@ void GL_BuildLightmaps (void)
 			GL_CreateSurfaceLightmap (m->surfaces + i);
 			if ( m->surfaces[i].flags & SURF_DRAWTURB )
 				continue;
+
+//			else if (m->name[0] == 'glass')
+//				continue;
 #ifndef QUAKE2
 			if ( m->surfaces[i].flags & SURF_DRAWSKY )
 				continue;

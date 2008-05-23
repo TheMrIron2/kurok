@@ -633,7 +633,7 @@ void Host_Loadgame_f (void)
 		Con_Printf ("Couldn't load map\n");
 		return;
 	}
-	sv.paused = true;		// pause until all clients connect
+//	sv.paused = true;		// pause until all clients connect
 	sv.loadgame = true;
 
 // load the light styles

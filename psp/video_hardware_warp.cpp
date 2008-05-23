@@ -274,6 +274,7 @@ void EmitWaterPolys (msurface_t *fa)
 	}
 }
 
+
 /*
 =============
 EmitReflectivePolys
@@ -364,7 +365,7 @@ EmitSkyPolys
 void EmitSkyPolys (msurface_t *fa)
 {
      
-  if (!r_skybox.value)
+  if (!r_skyclip.value)
   {
 
 	for (const glpoly_t* p = fa->polys; p; p = p->next)

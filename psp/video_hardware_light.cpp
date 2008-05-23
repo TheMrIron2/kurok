@@ -78,8 +78,8 @@ static void AddLightBlend (float r, float g, float b, float a2)
 
 static void R_RenderDlight (dlight_t *light)
 {
-	int		i, j;
-	float	a;
+//	int		i, j;
+//	float	a;
 	vec3_t	v;
 	float rad;
 
@@ -118,8 +118,8 @@ R_RenderDlights
 */
 void R_RenderDlights (void)
 {
-	int		i;
-	dlight_t	*l;
+//	int		i;
+//	dlight_t	*l;
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame

@@ -850,6 +850,8 @@ Host_Init
 */
 void Host_Init (quakeparms_t *parms)
 {
+	scr_disabled_for_loading = true;
+
 	if (standard_quake)
 		minimum_memory = MINIMUM_MEMORY;
 	else
@@ -888,10 +890,10 @@ void Host_Init (quakeparms_t *parms)
 	int currentCPU = scePowerGetCpuClockFrequency();
 
 #ifdef NORMAL_MODEL
-		Con_Printf ("PSP Normal 32MB RAM Mode \n");
+	Con_Printf ("PSP Normal 32MB RAM Mode \n");
 #endif
 #ifdef SLIM_MODEL
-		Con_Printf ("PSP Slim 64MB RAM Mode \n");
+	Con_Printf ("PSP Slim 64MB RAM Mode \n");
 #endif
 
 	Con_Printf ("%4.1f megabyte heap \n",parms->memsize/ (1024*1024.0));
@@ -945,7 +947,13 @@ void Host_Init (quakeparms_t *parms)
 
 	host_initialized = true;
 
-	Sys_Printf ("========Kurok Initialized=========\n");
+	Con_Printf ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+	scr_disabled_for_loading = false;
+
+	Con_Printf ("Loading ... Please wait ...\n");
+
+	Sys_Printf ("================ Kurok Initialized ===============\n");
 }
 
 

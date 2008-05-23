@@ -173,7 +173,7 @@ void SCR_DrawCenterString (void)
 
 // the finale prints the characters one at a time
 	if (cl.intermission)
-		remaining = scr_printspeed.value * (cl.time - scr_centertime_start);
+		remaining = int(scr_printspeed.value * (cl.time - scr_centertime_start));
 	else
 		remaining = 9999;
 
@@ -181,7 +181,7 @@ void SCR_DrawCenterString (void)
 	start = scr_centerstring;
 
 	if (scr_center_lines <= 4)
-		y = vid.height*0.35;
+		y = int(vid.height*0.35);
 	else
 		y = 48;
 
@@ -227,6 +227,7 @@ void SCR_CheckDrawCenterString (void)
 }
 
 //=============================================================================
+
 
 /*
 ====================
@@ -317,14 +318,14 @@ static void SCR_CalcRefdef (void)
 
 	h = vid.height - sb_lines;
 
-	r_refdef.vrect.width = vid.width * size;
+	r_refdef.vrect.width = int(vid.width * size);
 	if (r_refdef.vrect.width < 96)
 	{
 		size = 96.0 / r_refdef.vrect.width;
 		r_refdef.vrect.width = 96;	// min for icons
 	}
 
-	r_refdef.vrect.height = vid.height * size;
+	r_refdef.vrect.height = int(vid.height * size);
 	if (r_refdef.vrect.height > vid.height - sb_lines)
 		r_refdef.vrect.height = vid.height - sb_lines;
 	if (r_refdef.vrect.height > vid.height)
@@ -635,7 +636,7 @@ void SCR_DrawConsole (void)
 	if (scr_con_current)
 	{
 		scr_copyeverything = 1;
-		Con_DrawConsole (scr_con_current, qtrue);
+		Con_DrawConsole (int(scr_con_current), qtrue);
 		clearconsole = 0;
 	}
 	else
@@ -708,7 +709,7 @@ void SCR_DrawNotifyString (void)
 
 	start = scr_notifystring;
 
-	y = vid.height*0.35f;
+	y = int(vid.height*0.35f);
 
 	do	
 	{

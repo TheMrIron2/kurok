@@ -797,7 +797,7 @@ void CalcGunAngle (void)
 	SceCtrlData pad;
 	sceCtrlPeekBufferPositive(&pad, 1);
 
-    if (kurok)
+//    if (kurok)
     {
         cl.viewent.angles[ROLL] -= sin(cl.time*3);
         if (!in_disable_analog.value)
@@ -821,7 +821,7 @@ void CalcGunAngle (void)
             cl.viewent.angles[PITCH] -= cl_gunpitch.value;
 
     }
-    else
+//    else
     {
 	   cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time*v_iroll_cycle.value) * v_iroll_level.value;
 	   cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time*v_ipitch_cycle.value) * v_ipitch_level.value;
@@ -943,10 +943,7 @@ void V_CalcIntermissionRefdef (void)
 	view->model = NULL;
 
 // allways idle in intermission
-    if (kurok)
-    {
-    }
-    else
+    if (!kurok)
     {
 	    old = v_idlescale.value;
 	    v_idlescale.value = 1;

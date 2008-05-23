@@ -119,6 +119,7 @@ byte	dottexture2[16][16] =
 	{0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 };
+
 void R_InitParticleTexture (void)
 {
 	int		x,y;
@@ -149,7 +150,7 @@ Grab six views for environment mapping tests
 void R_Envmap_f (void)
 {
 	byte	buffer[256*256*4];
-	char	name[1024];
+//	char	name[1024];
 
 	/*glDrawBuffer  (GL_FRONT);
 	glReadBuffer  (GL_FRONT);*/
@@ -213,7 +214,7 @@ R_Init
 */
 void R_Init (void)
 {	
-	extern byte *hunk_base;
+//	extern byte *hunk_base;
 	/*extern cvar_t gl_finish;*/
 
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
@@ -221,7 +222,8 @@ void R_Init (void)
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
 	Cmd_AddCommand ("fog", R_Fog_f);
 	
-	Cvar_RegisterVariable (&r_skybox);
+	Cvar_RegisterVariable (&r_skyclip);
+	Cvar_RegisterVariable (&r_menufade);
 	Cvar_RegisterVariable (&r_norefresh);
 	Cvar_RegisterVariable (&r_lightmap);
 	Cvar_RegisterVariable (&r_fullbright);
@@ -229,6 +231,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_drawviewmodel);
 	Cvar_RegisterVariable (&r_shadows);
 	Cvar_RegisterVariable (&r_mirroralpha);
+	Cvar_RegisterVariable (&r_glassalpha);
 	Cvar_RegisterVariable (&r_wateralpha);
 	Cvar_RegisterVariable (&r_dynamic);
 	Cvar_RegisterVariable (&r_novis);
@@ -297,12 +300,12 @@ void R_TranslatePlayerSkin (int playernum)
 	model_t	*model;
 	aliashdr_t *paliashdr;
 	byte	*original;
-	unsigned	pixels[512*256], *out;
+	unsigned	pixels[512*256];//, *out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
 	byte		*inrow;
 	unsigned	frac, fracstep;
-	extern	byte		**player_8bit_texels_tbl;
+//	extern	byte		**player_8bit_texels_tbl;
 
 	/*GL_DisableMultitexture();*/
 
@@ -377,11 +380,11 @@ void R_TranslatePlayerSkin (int playernum)
 		out2 = (byte *)pixels;
 		memset(pixels, 0, sizeof(pixels));
 		fracstep = inwidth*0x10000/scaled_width;
-		for (i=0 ; i<scaled_height ; i++, out2 += scaled_width)
+		for (i=0 ; i<(signed)scaled_height ; i++, out2 += scaled_width)
 		{
 			inrow = original + inwidth*(i*inheight/scaled_height);
 			frac = fracstep >> 1;
-			for (j=0 ; j<scaled_width ; j+=4)
+			for (j=0 ; j<(signed)scaled_width ; j+=4)
 			{
 				out2[j] = translate[inrow[frac>>16]];
 				frac += fracstep;
@@ -494,8 +497,8 @@ void R_TimeRefresh_f (void)
 {
 	int			i;
 	double		start, stop, time;
-	int			startangle;
-	vrect_t		vr;
+//	int			startangle;
+//	vrect_t		vr;
 
 
 	start = Sys_FloatTime ();

@@ -63,7 +63,7 @@ namespace quake
 		//! The GU display list.
 		//! @note	Aligned to 64 bytes so it doesn't share a cache line with anything.
 		unsigned int ALIGNED(64)	display_list[262144];
-		int cable, i, u, width, height, displaymode;
+//		int cable, i, u, width, height, displaymode;
 	}
 }
 
@@ -74,8 +74,8 @@ using namespace quake::video;
 ScePspRGBA8888 ALIGNED(16)	d_8to24table[palette_size];
 ScePspRGBA8888 ALIGNED(16)	d_8to24tableLM[palette_size];
 
-int pspDveMgrCheckVideoOut();
-int pspDveMgrSetVideoOut(int, int, int, int, int, int, int);
+//int pspDveMgrCheckVideoOut();
+//int pspDveMgrSetVideoOut(int, int, int, int, int, int, int);
 
 void VID_InitPaleteLM() {
 	// Convert the palette to PSP format.
@@ -296,13 +296,9 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 //    sceGuSetDither( (ScePspIMatrix4*)DitherMatrix[(r_framecount&1)] );
 
     if (r_dithering.value)
-    {
 		sceGuEnable(GU_DITHER);
-    }
 	else
-	{
 		sceGuDisable(GU_DITHER);
-    }
 }
 
 void GL_EndRendering (void)
@@ -515,6 +511,7 @@ void SCR_ScreenShot_f (void)
 			const pixel argb = *src++;
 
 // For RGB 888 pixel format
+
 			buffer[i++]	= (argb >> 16) & 0xff;
 			buffer[i++]	= (argb >> 8) & 0xff;
 			buffer[i++]	= argb & 0xff;
