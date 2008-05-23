@@ -42,10 +42,10 @@ static int bitrates[] = { 0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224
 #define MIN_INFRAME_SIZE 96
 #define IN_BUFFER_SIZE (2*1024)
 
-static unsigned long mp3_codec_struct[65] __attribute__((aligned(64)));
+static unsigned long mp3_codec_struct[65];// __attribute__((aligned(64)));
 
-static unsigned char mp3_src_buffer[2][IN_BUFFER_SIZE] __attribute__((aligned(64)));
-static short mp3_mix_buffer[2][1152*2] __attribute__((aligned(64)));
+static unsigned char mp3_src_buffer[2][IN_BUFFER_SIZE];// __attribute__((aligned(64)));
+static short mp3_mix_buffer[2][1152*2];// __attribute__((aligned(64)));
 static int working_buf = 0;
 
 static const char *mp3_fname = NULL;

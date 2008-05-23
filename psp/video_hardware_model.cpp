@@ -356,7 +356,6 @@ model_t *Mod_ForName (char *name, qboolean crash)
 
 byte	*mod_base;
 
-
 /*
 =================
 Mod_LoadTextures
@@ -1460,9 +1459,9 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	int		i, j, k;
 	char	name[32];
 	int		s;
-	byte	*copy;
+//	byte	*copy;
 	byte	*skin;
-	byte	*texels;
+//	byte	*texels;
 	daliasskingroup_t		*pinskingroup;
 	int		groupskins;
 	daliasskininterval_t	*pinskinintervals;
@@ -1526,7 +1525,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	mdl_t				*pinmodel;
 	stvert_t			*pinstverts;
 	dtriangle_t			*pintriangles;
-	int					version, numframes, numskins;
+	int					version, numframes;//, numskins;
 	int					size;
 	daliasframetype_t	*pframetype;
 	daliasskintype_t	*pskintype;

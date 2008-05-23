@@ -147,6 +147,7 @@ extern	cvar_t	r_fullbright;
 extern	cvar_t	r_lightmap;
 extern	cvar_t	r_shadows;
 extern	cvar_t	r_mirroralpha;
+extern	cvar_t	r_glassalpha;
 extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
@@ -163,7 +164,8 @@ extern	cvar_t	r_antialias;
 extern	cvar_t	r_mipmaps;
 extern	cvar_t	r_mipmaps_func;
 extern	cvar_t	r_mipmaps_bias;
-extern  cvar_t	r_skybox;
+extern  cvar_t	r_skyclip;
+extern  cvar_t  r_menufade;
 extern  cvar_t	r_test;
 
 extern	int			mirrortexturenum;	// quake texturenum, not gltexturenum

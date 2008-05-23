@@ -107,8 +107,10 @@ void GL_Bind (int texture_index)
 
 	if (texture.mipmaps > 0 && r_mipmaps.value > 0)
     {
+		float slope = 0.4f;
+		sceGuTexSlope(slope); // the near from 0 slope is the lower (=best detailed) mipmap it uses
         sceGuTexFilter(GU_LINEAR_MIPMAP_LINEAR, GU_LINEAR_MIPMAP_LINEAR);
-		sceGuTexLevelMode(r_mipmaps_func.value, r_mipmaps_bias.value); // manual slope setting
+		sceGuTexLevelMode(int(r_mipmaps_func.value), r_mipmaps_bias.value);
 	}
 	else
 		sceGuTexFilter(texture.filter, texture.filter);
@@ -116,7 +118,6 @@ void GL_Bind (int texture_index)
 	// Set the texture image.
 	const void* const texture_memory = texture.vram ? texture.vram : texture.ram;
 	sceGuTexImage(0, texture.width, texture.height, texture.width, texture_memory);
-	
 	
 	if (texture.mipmaps > 0 && r_mipmaps.value > 0) {
 		int size = (texture.width * texture.height);
@@ -130,7 +131,6 @@ void GL_Bind (int texture_index)
 			div *=2;
 		}
 	}
-	
 }
 
 void GL_BindLM (int texture_index)
@@ -295,11 +295,8 @@ void Draw_Init (void)
 	if (!cb)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
-	
-	if (kurok)
-	{
-    }
-    else
+
+	if (!kurok)
     {
 	    // hack the version number directly into the pic
 	    sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
@@ -413,9 +410,7 @@ Draw_AlphaPic
 static void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 {
 	if (alpha != 1.0f)
-	{
 		sceGuTexFunc(GU_TFX_DECAL, GU_TCC_RGBA);
-	}
 
 	glpic_t			*gl;
 
@@ -426,43 +421,50 @@ static void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 	gl = (glpic_t *)pic->data;
 	GL_Bind (gl->index);
 
+	const gltexture_t& glt = gltextures[gl->index];
+
 	struct vertex
 	{
 		short			u, v;
 		short			x, y, z;
 	};
 
+	int start, end;
+	int slice = 32;
+
+	// blit maximizing the use of the texture-cache
+
+	for (start = 0, end = glt.original_width; start < end; start += slice, x += slice)
+	{
+
 	vertex* const vertices = static_cast<vertex*>(sceGuGetMemory(sizeof(vertex) * 2));
 
-	vertices[0].u		= 0;
+	int width = (start + slice) < end ? slice : end-start;
+
+	vertices[0].u		= start;
 	vertices[0].v		= 0;
 	vertices[0].x		= x;
 	vertices[0].y		= y;
 	vertices[0].z		= 0;
 
-	const gltexture_t& glt = gltextures[gl->index];
-	vertices[1].u		= glt.original_width;
+	vertices[1].u		= start + width;//glt.original_width;
 	vertices[1].v		= glt.original_height;
-	vertices[1].x		= x + pic->width;
+	vertices[1].x		= x + width;//pic->width;
 	vertices[1].y		= y + pic->height;
 	vertices[1].z		= 0;
 
 	sceGuColor(GU_RGBA(0xff, 0xff, 0xff, static_cast<unsigned int>(alpha * 255.0f)));
-	sceGuDrawArray(
-		GU_SPRITES,
-		GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-		2, 0, vertices);
+	sceGuDrawArray(GU_SPRITES,GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
 
-	if (alpha != 1.0f)
-	{
-		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
 	}
+	if (alpha != 1.0f)
+		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
 }
 
 void Draw_Crosshair(void)
 {
 
-	extern vrect_t		scr_vrect;
+//	extern vrect_t scr_vrect;
     extern cvar_t crosshair;
     extern cvar_t cl_crossx;
     extern cvar_t cl_crossy;
@@ -474,96 +476,80 @@ void Draw_Crosshair(void)
 
 	qpic_t	*pic;
 
-if (kurok)
-{
-	// Read the pad state.
-	SceCtrlData pad;
-	sceCtrlPeekBufferPositive(&pad, 1);
+	pic = 0;
 
-	if (crosshair.value > 2)
-    {
-		
-		if (crosshair.value == 3)
-		{
-             pic = Draw_CachePic ("gfx/ch_axe.lmp");
-        }
-	
-        else if (crosshair.value == 4)
-		{
-             pic = Draw_CachePic ("gfx/ch_tekbo.lmp");
-        }
-	
-        else if (crosshair.value == 5)
-		{
-             pic = Draw_CachePic ("gfx/ch_sgun.lmp");
-        }
-		
-        else if (crosshair.value == 6)
-		{
-             pic = Draw_CachePic ("gfx/ch_ssgun.lmp");
-        }
-		
-        else if (crosshair.value == 7)
-		{
-             pic = Draw_CachePic ("gfx/ch_ngun.lmp");
-        }
-		
-        else if (crosshair.value == 8)
-		{
-             pic = Draw_CachePic ("gfx/ch_sngun.lmp");
-        }
-		
-        else if (crosshair.value == 9)
-		{
-             pic = Draw_CachePic ("gfx/ch_gl.lmp");
-        }
-		
-        else if (crosshair.value == 10)
-		{
-             pic = Draw_CachePic ("gfx/ch_rl.lmp");
-        }
-		
-        else if (crosshair.value == 11)
-        {
-             pic = Draw_CachePic ("gfx/ch_light.lmp");
-        }
+	if (kurok)
+	{
+		// Read the pad state.
+		SceCtrlData pad;
+		sceCtrlPeekBufferPositive(&pad, 1);
 
-        if (!in_disable_analog.value)
-        {
-            if (in_freelook_analog.value)
-            {
-                if (m_pitch.value < 0)
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
-                             (vid.height - pic->height)/2 + cl_crossy.value - ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 ), pic);
-                else
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
-                             (vid.height - pic->height)/2 + cl_crossy.value + ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 ), pic);
-            }
-            else
-            {
-                if (!in_analog_strafe.value)
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 ),
-                             (vid.height - pic->height)/2 + cl_crossy.value, pic);
-                else
-                    Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value, (vid.height - pic->height)/2 + cl_crossy.value, pic);
-            }
-        }
-        else
-            Draw_Pic ((vid.width - pic->width)/2 + cl_crossx.value, (vid.height - pic->height)/2 + cl_crossy.value, pic);
-    }
+		if (crosshair.value > 2)
+	    {
+			if (crosshair.value == 3)
+				pic = Draw_CachePic ("gfx/ch_axe.lmp");
+
+	        else if (crosshair.value == 4)
+				pic = Draw_CachePic ("gfx/ch_tekbo.lmp");
+	
+	        else if (crosshair.value == 5)
+				pic = Draw_CachePic ("gfx/ch_sgun.lmp");
 		
-	else if (crosshair.value)
-         Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
-}
-else
-{	
-     if (crosshair.value == 1)
+	        else if (crosshair.value == 6)
+				pic = Draw_CachePic ("gfx/ch_ssgun.lmp");
+		
+	        else if (crosshair.value == 7)
+				pic = Draw_CachePic ("gfx/ch_ngun.lmp");
+		
+	        else if (crosshair.value == 8)
+				pic = Draw_CachePic ("gfx/ch_sngun.lmp");
+		
+			else if (crosshair.value == 9)
+				pic = Draw_CachePic ("gfx/ch_gl.lmp");
+		
+			else if (crosshair.value == 10)
+				pic = Draw_CachePic ("gfx/ch_rl.lmp");
+		
+			else if (crosshair.value == 11)
+				pic = Draw_CachePic ("gfx/ch_light.lmp");
+
+			double crosshair_x = (vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 );
+			double crosshair_y = (vid.height - pic->height)/2 + cl_crossy.value + ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 );
+			double crosshair_y_i = (vid.height - pic->height)/2 + cl_crossy.value - ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 );
+			double crosshair_static_x = (vid.width - pic->width)/2 + cl_crossx.value;
+			double crosshair_static_y = (vid.height - pic->height)/2 + cl_crossy.value;
+
+			if (!in_disable_analog.value)
+			{
+            	if (in_freelook_analog.value)
+            	{
+                	if (m_pitch.value < 0)
+                    	Draw_Pic (int(crosshair_x), int(crosshair_y_i), pic);
+                	else
+                    	Draw_Pic (int(crosshair_x), int(crosshair_y), pic);
+            	}
+            	else
+            	{
+                	if (!in_analog_strafe.value)
+                    	Draw_Pic (int(crosshair_x), int(crosshair_static_y), pic);
+                	else
+                    	Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
+            	}
+        	}
+        	else
+            	Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
+    	}
+		else if (crosshair.value)
+			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
+	}
+	else
+	{
+		if (crosshair.value == 1)
 //         Draw_Character (scr_vrect.x + scr_vrect.width/2 - 2, scr_vrect.y + scr_vrect.height/2 - 4, '+');
-         Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
-	 else if (crosshair.value == 2)
-         Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '+');
-}
-
+			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
+		else if (crosshair.value == 2)
+			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '+');
+	}
 }
 
 /*
@@ -801,8 +787,10 @@ Draw_FadeScreen2
 */
 void Draw_FadeScreen2 (void)
 {
+    extern cvar_t r_menufade;
+
 	sceGuDisable(GU_ALPHA_TEST);
-	Draw_AlphaPic (0, 0, conback, 0.75f);
+	Draw_AlphaPic (0, 0, conback, r_menufade.value);
 	sceGuEnable(GU_ALPHA_TEST);
 }
 
@@ -854,7 +842,6 @@ void GL_Set2D (void)
 	sceGuEnable(GU_BLEND);
 	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
 }
-
 
 static void GL_ResampleTexture(const byte *in, int inwidth, int inheight, unsigned char *out,  int outwidth, int outheight)
 {

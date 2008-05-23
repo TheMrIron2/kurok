@@ -31,12 +31,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern cvar_t	accesspoint;
 extern cvar_t	r_wateralpha;
 extern cvar_t	r_vsync;
+extern cvar_t	r_mipmaps;
+extern cvar_t	r_mipmaps_bias;
 extern cvar_t	in_freelook_analog;
 extern cvar_t	in_disable_analog;
 extern cvar_t	in_analog_strafe;
 extern cvar_t	in_x_axis_adjust;
 extern cvar_t	in_y_axis_adjust;
 extern cvar_t	r_dithering;
+extern cvar_t   r_i_model_animation;
+extern cvar_t   t_i_model_transform;
 extern cvar_t	show_fps;
 
 refdef_t	r_refdef;
@@ -1477,12 +1481,12 @@ enum
 {
 	OPT_SUBMENU_1 = OPT_SUBMENU,
     OPT_GAP_1,
-	OPT_GAMMA,	
+	OPT_GAMMA,
 	OPT_MAXFPS,
     OPT_GAP_1_1,
     OPT_DYNAMIC,
 	OPT_SIMPLE_PART,
-	OPT_DITHERING,
+	OPT_MIPMAPS,
 	OPT_ANTIALIAS,
 	OPT_VSYNC,
     OPT_FPS,
@@ -1513,7 +1517,11 @@ enum
     OPT_GAP_3_1,
     OPT_SCRSIZE,
 	OPT_WATERTRANS,
+	OPT_MIPMAP_BIAS,
 	OPT_TEX_SCALEDOWN,
+	OPT_DITHERING,
+	OPT_SMOOTH_ANIMS,
+	OPT_SMOOTH_MOVEMENT,
     OPTIONS_ITEMS_3
 };
 
@@ -1730,12 +1738,12 @@ void M_AdjustSliders (int dir)
 				Cvar_SetValue ("r_particles_simple", !r_particles_simple.value);
 				break;
 				
-			case OPT_DITHERING:	
-				Cvar_SetValue ("r_dithering", !r_dithering.value);
-				break;
-				
 			case OPT_ANTIALIAS:	
 				Cvar_SetValue ("r_antialias", !r_antialias.value);
+				break;
+
+			case OPT_MIPMAPS:
+				Cvar_SetValue ("r_mipmaps", !r_mipmaps.value);
 				break;
 #endif	
         }	
@@ -1846,7 +1854,7 @@ void M_AdjustSliders (int dir)
 				Cvar_SetValue ("viewsize", scr_viewsize.value);
 				break;
 
-			case OPT_WATERTRANS:	// wateraplha
+			case OPT_WATERTRANS:	// wateralpha
 				r_wateralpha.value += dir * 0.1;
 				if (r_wateralpha.value < 0)
 					r_wateralpha.value = 0;
@@ -1856,10 +1864,31 @@ void M_AdjustSliders (int dir)
 				Cvar_SetValue ("r_wateralpha", r_wateralpha.value);
 				break;
 
+			case OPT_MIPMAP_BIAS:	// mipmapping bais
+				r_mipmaps_bias.value += dir * 0.5;
+				if (r_mipmaps_bias.value < -10)
+					r_mipmaps_bias.value = -10;
+				if (r_mipmaps_bias.value > 0)
+					r_mipmaps_bias.value = 0;
+
+				Cvar_SetValue ("r_mipmaps_bias", r_mipmaps_bias.value);
+				break;
+
 			case OPT_TEX_SCALEDOWN:	
 				Cvar_SetValue ("r_tex_scale_down", !r_tex_scale_down.value);
 				break;
 
+			case OPT_DITHERING:
+				Cvar_SetValue ("r_dithering", !r_dithering.value);
+				break;
+
+			case OPT_SMOOTH_ANIMS:
+				Cvar_SetValue ("r_i_model_animation", !r_i_model_animation.value);
+				break;
+
+			case OPT_SMOOTH_MOVEMENT:
+				Cvar_SetValue ("r_i_model_transform", !r_i_model_transform.value);
+				break;
         }	
     }
 }
@@ -1990,12 +2019,12 @@ void M_Options_Draw (void)
 		
 			M_Print (16, offset+(OPT_SIMPLE_PART*8),    "      Simple Particles");
 			M_DrawCheckbox (220, offset+(OPT_SIMPLE_PART*8), r_particles_simple.value);
-			
-			M_Print (16, offset+(OPT_DITHERING*8),      "             Dithering");
-			M_DrawCheckbox (220, offset+(OPT_DITHERING*8), r_dithering.value);
 
 			M_Print (16, offset+(OPT_ANTIALIAS*8),      "         Anti-Aliasing");
 			M_DrawCheckbox (220, offset+(OPT_ANTIALIAS*8), r_antialias.value);
+
+			M_Print (16, offset+(OPT_MIPMAPS*8),        "            MipMapping");
+			M_DrawCheckbox (220, offset+(OPT_MIPMAPS*8), r_mipmaps.value);
 		#endif
 
             break;
@@ -2024,36 +2053,49 @@ void M_Options_Draw (void)
 
         case 3:
 
-			M_Print (16, offset+(OPT_FOG_START*8), "    Fog start distance");
+			M_Print (16, offset+(OPT_FOG_START*8),			"    Fog start distance");
 			r = (r_refdef.fog_start - (-5000)) / ((5000) - (-5000));
 			M_DrawSlider (220, offset+(OPT_FOG_START*8), r);
 		
-			M_Print (16, offset+(OPT_FOG_END*8),   "      Fog end distance");
+			M_Print (16, offset+(OPT_FOG_END*8),			"      Fog end distance");
 			r = (r_refdef.fog_end - (-5000)) / ((5000) - (-5000));
 			M_DrawSlider (220, offset+(OPT_FOG_END*8), r);
 
-			M_Print (16, offset+(OPT_FOG_RED*8),   "        Fog red amount");
+			M_Print (16, offset+(OPT_FOG_RED*8),			"        Fog red amount");
 			r = (r_refdef.fog_red) / 100;
 			M_DrawSlider (220, offset+(OPT_FOG_RED*8), r);
 
-			M_Print (16, offset+(OPT_FOG_GREEN*8), "      Fog green amount");
+			M_Print (16, offset+(OPT_FOG_GREEN*8),			"      Fog green amount");
 			r = (r_refdef.fog_green) / 100;
 			M_DrawSlider (220, offset+(OPT_FOG_GREEN*8), r);
 
-			M_Print (16, offset+(OPT_FOG_BLUE*8),  "       Fog blue amount");
+			M_Print (16, offset+(OPT_FOG_BLUE*8),			"       Fog blue amount");
 			r = (r_refdef.fog_blue) / 100;
 			M_DrawSlider (220, offset+(OPT_FOG_BLUE*8), r);
 
-			M_Print (16, offset+(OPT_SCRSIZE*8),   "           Screen size");
+			M_Print (16, offset+(OPT_SCRSIZE*8),			"           Screen size");
 			r = (scr_viewsize.value - 30) / (130 - 30);
 			M_DrawSlider (220, offset+(OPT_SCRSIZE*8), r);
 
-			M_Print (16, offset+(OPT_WATERTRANS*8), "     Water tranparency");
+			M_Print (16, offset+(OPT_WATERTRANS*8),			"     Water tranparency");
 			M_DrawSlider (220, offset+(OPT_WATERTRANS*8), r_wateralpha.value);
+
+			M_Print (16, offset+(OPT_MIPMAP_BIAS*8),		"         MipMap Amount");
+			r = (r_mipmaps_bias.value + 10) / 10;
+			M_DrawSlider (220, offset+(OPT_MIPMAP_BIAS*8), r);
 		
-			M_Print (16, offset+(OPT_TEX_SCALEDOWN*8), "    Texture Scale Down");
+			M_Print (16, offset+(OPT_TEX_SCALEDOWN*8),		"    Texture Scale Down");
 			M_DrawCheckbox (220, offset+(OPT_TEX_SCALEDOWN*8), r_tex_scale_down.value);
-			
+
+			M_Print (16, offset+(OPT_DITHERING*8),      "             Dithering");
+			M_DrawCheckbox (220, offset+(OPT_DITHERING*8), r_dithering.value);
+
+			M_Print (16, offset+(OPT_SMOOTH_ANIMS*8),		"Smooth Model Animation");
+			M_DrawCheckbox (220, offset+(OPT_SMOOTH_ANIMS*8), r_i_model_animation.value);
+
+			M_Print (16, offset+(OPT_SMOOTH_MOVEMENT*8),	" Smooth Model Movement");
+			M_DrawCheckbox (220, offset+(OPT_SMOOTH_MOVEMENT*8), r_i_model_transform.value);
+
             break;
 
 	}
@@ -2065,13 +2107,13 @@ void M_Options_Draw (void)
             M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Control Options");         
             break;
         case 1:
-            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Video options");         
+            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Video Options");
             break;
         case 2:
-            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Audio options");         
+            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Audio Options");
             break;
         case 3:
-            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Misc options");         
+            M_PrintWhite (220, offset+(OPT_SUBMENU*8), "Misc. Options");
             break;
         default:
             break;
@@ -3778,18 +3820,18 @@ level_t		levels[] =
 
 level_t		kuroklevels[] =
 {
-	{"start", "< Entrance >"},	// 0
+	{"start", "Entrance"},		// 0
+	{"e1m1", "Base Entrance"},
+	{"e1m2", "Base"},
+	{"e1m3", "Canyon Testing Grounds"},
+	{"e1m4", "Cavern Testing Grounds"},
+	{"e1m5", "Canyon Jungle"},
+	{"e1m6", "Experiment Rex"},
 
-	{"e1m1", "< Base Entrance >"},				// 1
-	{"e1m2", "< Base >"},
-	{"e1m3", "< Canyon Testing Grounds >"},
-	{"e1m4", "< Cavern Testing Grounds >"},
-	{"e1m5", "< Canyon Jungle >"},
-	{"e1m6", "< Experiment Rex >"},
-
-	{"kdm1", "< Canyon Arena >"}, // 7
-	{"kdm2", "< Base Arena >"},
-	{"kdm3", "< Classic Complex >"}
+	{"kdm1", "Canyon Arena"}, 	// 7
+	{"kdm2", "Base Arena"},
+	{"kdm3", "Ruins Arena"},
+	{"kdm4", "Classic Complex"}
 };
 
 //MED 01/06/97 added hipnotic levels
@@ -3863,9 +3905,9 @@ episode_t	episodes[] =
 
 episode_t	kurokepisodes[] =
 {
-	{"< Kurok Intro >", 0, 1},
-	{"< Jungle Base Chapter >", 1, 6},
-	{"< Kurok Arena >", 7, 3}
+	{"Kurok Hub", 0, 1},
+	{"Jungle Base Chapter", 1, 6},
+	{"Kurok Arena", 7, 4}
 };
 
 //MED 01/06/97  added hipnotic episodes

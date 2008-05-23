@@ -214,6 +214,7 @@ static void BuildTris (void)
 	//
 	// build tristrips
 	//
+	besttype = 0;
 	numorder = 0;
 	numcommands = 0;
 	memset (used, 0, sizeof(used));
@@ -280,7 +281,6 @@ static void BuildTris (void)
 	allverts += numorder;
 	alltris += pheader->numtris;
 }
-
 
 /*
 ================
