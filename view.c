@@ -73,7 +73,7 @@ cvar_t	gl_cshiftpercent = {"gl_cshiftpercent", "100", false};
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
 extern	int			in_forward, in_forward2, in_back;
-
+extern	cvar_t		lookcenter;
 /*
 ===============
 V_CalcRoll
@@ -175,8 +175,8 @@ float V_CalcBobSide (void)
 //=============================================================================
 
 
-cvar_t	v_centermove = {"v_centermove", "0.15", false};
-cvar_t	v_centerspeed = {"v_centerspeed","500"};
+cvar_t	v_centermove = {"v_centermove", "1", true};
+cvar_t	v_centerspeed = {"v_centerspeed","100", true};
 
 
 void V_StartPitchDrift (void)
@@ -219,7 +219,7 @@ void V_DriftPitch (void)
 {
 	float		delta, move;
 
-	if (noclip_anglehack || !cl.onground || cls.demoplayback )
+	if (noclip_anglehack || !cl.onground || cls.demoplayback || lookcenter.value)
 	{
 		cl.driftmove = 0;
 		cl.pitchvel = 0;
@@ -547,10 +547,12 @@ void V_CalcBlend (void)
 	v_blend[1] = g/255.0;
 	v_blend[2] = b/255.0;
 	v_blend[3] = a;
+
 	if (v_blend[3] > 1)
 		v_blend[3] = 1;
 	if (v_blend[3] < 0)
 		v_blend[3] = 0;
+
 }
 #endif
 
@@ -748,6 +750,8 @@ void CalcGunAngle (void)
     extern cvar_t	in_freelook_analog;
     extern cvar_t	in_disable_analog;
     extern cvar_t	in_analog_strafe;
+
+    extern cvar_t   in_zoom_adjust;
     extern cvar_t   in_x_axis_adjust;
     extern cvar_t   in_y_axis_adjust;
 
@@ -797,7 +801,9 @@ void CalcGunAngle (void)
 	SceCtrlData pad;
 	sceCtrlPeekBufferPositive(&pad, 1);
 
-//    if (kurok)
+	extern cvar_t scr_fov;
+
+    if (scr_fov.value == 90)
     {
         cl.viewent.angles[ROLL] -= sin(cl.time*3);
         if (!in_disable_analog.value)
@@ -821,7 +827,7 @@ void CalcGunAngle (void)
             cl.viewent.angles[PITCH] -= cl_gunpitch.value;
 
     }
-//    else
+    else
     {
 	   cl.viewent.angles[ROLL] -= v_idlescale.value * sin(cl.time*v_iroll_cycle.value) * v_iroll_level.value;
 	   cl.viewent.angles[PITCH] -= v_idlescale.value * sin(cl.time*v_ipitch_cycle.value) * v_ipitch_level.value;

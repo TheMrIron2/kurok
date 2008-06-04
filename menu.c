@@ -36,12 +36,17 @@ extern cvar_t	r_mipmaps_bias;
 extern cvar_t	in_freelook_analog;
 extern cvar_t	in_disable_analog;
 extern cvar_t	in_analog_strafe;
+extern cvar_t	lookspring;
+extern cvar_t	in_zoom_adjust;
 extern cvar_t	in_x_axis_adjust;
 extern cvar_t	in_y_axis_adjust;
 extern cvar_t	r_dithering;
 extern cvar_t   r_i_model_animation;
 extern cvar_t   t_i_model_transform;
 extern cvar_t	show_fps;
+extern cvar_t   sv_aim;
+extern cvar_t   noexit;
+
 
 refdef_t	r_refdef;
 
@@ -939,11 +944,11 @@ void M_MultiPlayer_Key (int key)
 			break;
 
 	    case 5:	// add bot
-		    Cbuf_AddText ("impulse 100\n");
+		    Cbuf_AddText ("impulse 101\n");
 		    break;
 
 	    case 6:	// add team bot
-		    Cbuf_AddText ("impulse 101\n");
+		    Cbuf_AddText ("impulse 100\n");
 		    break;
 
 	    case 7:	// remove bot
@@ -1056,8 +1061,16 @@ void M_Setup_Draw (void)
 	M_DrawTextBox (160, 48+offset, 16, 1);
 	M_Print (168, 56+offset, setup_myname);
 
-	M_Print (64, 80+offset, "Top color");
-	M_Print (64, 104+offset, "Bottom color");
+	if(!kurok)
+	{
+		M_Print (64, 80+offset, "Top color");
+		M_Print (64, 104+offset, "Bottom color");
+	}
+	else
+	{
+		M_Print (64, 80+offset, "Top color");
+		M_Print (64, 104+offset, "Team color");
+	}
 
 	M_DrawTextBox (64, 140+offset-8, 14, 1);
 	M_Print (72, 140+offset, "Accept Changes");
@@ -1073,10 +1086,13 @@ void M_Setup_Draw (void)
 	Draw_Fill ( 248, 72+offset, 56, 28, top);
 	Draw_Fill ( 248, 72+28+offset, 56, 28, bottom);
 
-	p = Draw_CachePic ("gfx/menuplyr.lmp");
-//	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
-//	M_DrawTransPicTranslate (172, 72+offset, p);
-	M_DrawTransPic (172, 72+offset, p);
+	if(!kurok)
+	{
+		p = Draw_CachePic ("gfx/menuplyr.lmp");
+//		M_BuildTranslationTable(setup_top*16, setup_bottom*16);
+//		M_DrawTransPicTranslate (172, 72+offset, p);
+		M_DrawTransPic (172, 72+offset, p);
+	}
 
 	M_DrawCharacter (56, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
 
@@ -1132,7 +1148,13 @@ void M_Setup_Key (int k)
 		if (setup_cursor == 2+offset)
 			setup_top = setup_top - 1;
 		if (setup_cursor == 3+offset)
-			setup_bottom = setup_bottom - 1;
+		{
+			if(!kurok)
+				setup_bottom = setup_bottom - 1;
+			else
+				setup_bottom = 4;
+		}
+
 		break;
 	case K_RIGHTARROW:
 #ifdef PSP
@@ -1156,7 +1178,13 @@ forward:
 		if (setup_cursor == 2+offset)
 			setup_top = setup_top + 1;
 		if (setup_cursor == 3+offset)
-			setup_bottom = setup_bottom + 1;
+		{
+			if(!kurok)
+				setup_bottom = setup_bottom + 1;
+			else
+				setup_bottom = 13;
+		}
+
 		break;
 
 	case K_INS:
@@ -1464,17 +1492,19 @@ enum
 {
 	OPT_SUBMENU_0 = OPT_SUBMENU,
     OPT_GAP_0,
+	OPT_MOUSELOOK,
+	OPT_MOUSESTRAFE,
+	OPT_AUTOCENTER,
+    OPT_GAP_0_1,
 	OPT_IN_SPEED,
 	OPT_IN_X_ADJUST,
 	OPT_IN_Y_ADJUST,
 	OPT_IN_TOLERANCE,
 	OPT_IN_ACCELERATION,
-    OPT_GAP_0_1,
-	OPT_INVMOUSE,	
-	OPT_NOMOUSE,
-	OPT_MOUSELOOK,
-	OPT_MOUSESTAFE,	
+    OPT_GAP_0_2,
 	OPT_ALWAYRUN,
+	OPT_INVMOUSE,
+	OPT_NOMOUSE,
     OPTIONS_ITEMS_0
 };
 enum 
@@ -1485,6 +1515,7 @@ enum
 	OPT_MAXFPS,
     OPT_GAP_1_1,
     OPT_DYNAMIC,
+	OPT_MODEL_BRIGHTNESS,
 	OPT_SIMPLE_PART,
 	OPT_MIPMAPS,
 	OPT_ANTIALIAS,
@@ -1519,7 +1550,6 @@ enum
 	OPT_WATERTRANS,
 	OPT_MIPMAP_BIAS,
 	OPT_TEX_SCALEDOWN,
-	OPT_DITHERING,
 	OPT_SMOOTH_ANIMS,
 	OPT_SMOOTH_MOVEMENT,
     OPTIONS_ITEMS_3
@@ -1653,7 +1683,16 @@ void M_AdjustSliders (int dir)
 					in_y_axis_adjust.value = 11;
 				Cvar_SetValue ("in_y_axis_adjust", in_y_axis_adjust.value);
 				break;
-								
+/*
+			case OPT_IN_ZOOM_ADJUST; // zoom speed
+				in_zoom_adjust.value += dir * 1;
+				if (in_zoom_adjust.value < 1)
+					in_zoom_adjust.value = 1;
+				if (in_zoom_adjust.value > 33)
+					in_zoom_adjust.value = 33;
+				Cvar_SetValue ("in_zoom_adjust", in_zoom_adjust.value);
+				break;
+*/
 			case OPT_INVMOUSE:	// invert mouse
 				Cvar_SetValue ("m_pitch", -m_pitch.value);
 				break;
@@ -1661,8 +1700,12 @@ void M_AdjustSliders (int dir)
 			case OPT_NOMOUSE:	// disable mouse
 				Cvar_SetValue ("in_disable_analog", !in_disable_analog.value);
 				break;
-				
-			case OPT_MOUSESTAFE:
+
+			case OPT_AUTOCENTER: // auto center looking for digital keys
+				Cvar_SetValue ("lookcenter", !lookcenter.value);
+				break;
+
+			case OPT_MOUSESTRAFE:
 				Cvar_SetValue ("in_analog_strafe", !in_analog_strafe.value);
 				break;
 				
@@ -1725,7 +1768,11 @@ void M_AdjustSliders (int dir)
 			case OPT_VSYNC:	
 				Cvar_SetValue ("r_vsync", !r_vsync.value);
 				break;
-				
+
+			case OPT_MODEL_BRIGHTNESS:
+				Cvar_SetValue ("r_model_brightness", !r_model_brightness.value);
+				break;
+
 			case OPT_FPS:
 				Cvar_SetValue ("show_fps", !show_fps.value);
 				break;
@@ -1878,10 +1925,6 @@ void M_AdjustSliders (int dir)
 				Cvar_SetValue ("r_tex_scale_down", !r_tex_scale_down.value);
 				break;
 
-			case OPT_DITHERING:
-				Cvar_SetValue ("r_dithering", !r_dithering.value);
-				break;
-
 			case OPT_SMOOTH_ANIMS:
 				Cvar_SetValue ("r_i_model_animation", !r_i_model_animation.value);
 				break;
@@ -1937,12 +1980,12 @@ void M_Options_Draw (void)
     b = Draw_CachePic ("gfx/m_bttns.lmp");
 	M_DrawPic ( (320-b->width)/2, 248, b );
 
-	M_Print (16, offset+(OPT_CUSTOMIZE*8), "    Customize controls");
+	M_Print (16, offset+(OPT_CUSTOMIZE*8), "     Customize Buttons");
 	M_Print (16, offset+(OPT_CONSOLE*8),   "         Go to console");
 	
 	M_Print (16, offset+(OPT_DEFAULTS1*8), "         Load defaults");
-//	M_Print (16, offset+(OPT_DEFAULTS2*8),  "     Reset Defaults 2");
-//	M_Print (16, offset+(OPT_DEFAULTS3*8),  "     Reset Defaults 3");
+//	M_Print (16, offset+(OPT_DEFAULTS2*8), "     'Golden' defaults");
+//	M_Print (16, offset+(OPT_DEFAULTS3*8), "    'Digital' defaults");
 	
 	switch (m_submenu)
     {
@@ -1960,7 +2003,7 @@ void M_Options_Draw (void)
 			r = 1.0f -((in_acceleration.value - 0.5f)/1.5f);
 			M_DrawSlider (220, offset+(OPT_IN_ACCELERATION*8), r);
 
-			M_Print (16, offset+(OPT_IN_TOLERANCE*8), 	 "     Analog Tollerance");
+			M_Print (16, offset+(OPT_IN_TOLERANCE*8), 	 "     Analog Tolerance");
 			r = (in_tolerance.value )/1.0f;
 			M_DrawSlider (220, offset+(OPT_IN_TOLERANCE*8), r);
 		
@@ -1971,7 +2014,11 @@ void M_Options_Draw (void)
 			M_Print (16, offset+(OPT_IN_Y_ADJUST*8), 	 "   Analog Speed Y Axis");
 			r = (in_y_axis_adjust.value - 1)/10;
 			M_DrawSlider (220, offset+(OPT_IN_Y_ADJUST*8), r);
-
+/*
+			M_Print (16, offset+(OPT_IN_ZOOM_ADJUST*8),  "            Zoom Speed");
+			r = (in_zoom_adjust.value - 1)/33;
+			M_DrawSlider (220, offset+(OPT_IN_ZOOM_ADJUST*8), r);
+*/
 		#ifdef PSP
 			M_Print (16, offset+(OPT_INVMOUSE*8),        "         Invert Analog");
 		#else
@@ -1979,14 +2026,21 @@ void M_Options_Draw (void)
 		#endif
 			M_DrawCheckbox (220, offset+(OPT_INVMOUSE*8), m_pitch.value < 0);
 		
-			M_Print (16, offset+(OPT_MOUSELOOK*8),       "           Analog Look");
-			M_DrawCheckbox (220, offset+(OPT_MOUSELOOK*8), in_freelook_analog.value);
+			M_Print (16, offset+(OPT_MOUSELOOK*8),       "           Analog Mode");
+			if (in_freelook_analog.value == 1)
+				M_Print (220, offset+(OPT_MOUSELOOK*8), "Look");
+			else
+				M_Print (220, offset+(OPT_MOUSELOOK*8), "Move");
+//			M_DrawCheckbox (220, offset+(OPT_MOUSELOOK*8), in_freelook_analog.value);
 
 			M_Print (16, offset+(OPT_NOMOUSE*8),         "        Disable Analog");
 			M_DrawCheckbox (220, offset+(OPT_NOMOUSE*8), in_disable_analog.value );
-		
-			M_Print (16, offset+(OPT_MOUSESTAFE*8),		 "       Analog Strafing");
-			M_DrawCheckbox (220, offset+(OPT_MOUSESTAFE*8), in_analog_strafe.value );
+
+			M_Print (16, offset+(OPT_AUTOCENTER*8),      "Autocenter Button Look");
+			M_DrawCheckbox (220, offset+(OPT_AUTOCENTER*8), !lookcenter.value );
+
+			M_Print (16, offset+(OPT_MOUSESTRAFE*8),		 "       Analog Strafing");
+			M_DrawCheckbox (220, offset+(OPT_MOUSESTRAFE*8), in_analog_strafe.value );
 
         	M_Print (16, offset+(OPT_ALWAYRUN*8),        "            Always Run");
         	if (kurok)
@@ -2007,6 +2061,9 @@ void M_Options_Draw (void)
 
 			M_Print (16, offset+(OPT_DYNAMIC*8),   "      Dynamic Lighting");
 			M_DrawCheckbox (220, offset+(OPT_DYNAMIC*8), r_dynamic.value);
+
+			M_Print (16, offset+(OPT_MODEL_BRIGHTNESS*8),	"       Brighter Models");
+			M_DrawCheckbox (220, offset+(OPT_MODEL_BRIGHTNESS*8), r_model_brightness.value);
 
 	        M_Print (16, offset+(OPT_MAXFPS*8),    "    Maximum Frame Rate");
 	        r = (max_fps.value - 30) / (65 - 30);
@@ -2086,9 +2143,6 @@ void M_Options_Draw (void)
 		
 			M_Print (16, offset+(OPT_TEX_SCALEDOWN*8),		"    Texture Scale Down");
 			M_DrawCheckbox (220, offset+(OPT_TEX_SCALEDOWN*8), r_tex_scale_down.value);
-
-			M_Print (16, offset+(OPT_DITHERING*8),      "             Dithering");
-			M_DrawCheckbox (220, offset+(OPT_DITHERING*8), r_dithering.value);
 
 			M_Print (16, offset+(OPT_SMOOTH_ANIMS*8),		"Smooth Model Animation");
 			M_DrawCheckbox (220, offset+(OPT_SMOOTH_ANIMS*8), r_i_model_animation.value);
@@ -2176,6 +2230,8 @@ void M_Options_Key (int k)
 		        options_cursor = options_cursor -1;
 		    if (options_cursor == OPT_GAP_0_1)
 		        options_cursor = options_cursor -1;
+		    if (options_cursor == OPT_GAP_0_2)
+		        options_cursor = options_cursor -1;
         }
 
         if (m_submenu == 1)
@@ -2231,6 +2287,8 @@ void M_Options_Key (int k)
 		    if (options_cursor == OPT_GAP_0)
 		        options_cursor = options_cursor +1;
 		    if (options_cursor == OPT_GAP_0_1)
+		        options_cursor = options_cursor +1;
+		    if (options_cursor == OPT_GAP_0_2)
 		        options_cursor = options_cursor +1;
         }
         if (m_submenu == 1)
@@ -2295,7 +2353,6 @@ char *bindnames[][2] =
 {"impulse 10", 		"Next Weapon"},
 {"impulse 12", 		"Previous Weapon"},
 {"+jump", 			"Jump / Swim Up"},
-{"zoom_in",	    	"Zoom"},
 {"+forward", 		"Move Forward"},
 {"+back", 			"Move Backwards"},
 {"+moveleft", 		"Move Left"},
@@ -2326,8 +2383,8 @@ char *kbindnames[][2] =
 {"+attack", 		"Attack"},
 {"impulse 10", 		"Next Weapon"},
 {"impulse 12", 		"Previous Weapon"},
-{"impulse 13", 		"Reload"},
-{"zoom_in",	    	"Zoom"},
+{"impulse 13", 		"Reload / Secondary"},
+{"impulse 14", 		"Zoom"},
 {"+jump", 			"Jump / Swim Up"},
 {"+forward", 		"Move Forward"},
 {"+back", 			"Move Backwards"},
@@ -2443,9 +2500,9 @@ void M_Keys_Draw (void)
     if (kurok)
     {
 	    if (bind_grab)
-		    M_DrawCharacter (130, 48 + keys_cursor*8, '?');
+		    M_DrawCharacter (170, 48 + keys_cursor*8, '?');
 	    else
-		    M_DrawCharacter (130, 48 + keys_cursor*8, 12+((int)(realtime*30)&1));
+		    M_DrawCharacter (170, 48 + keys_cursor*8, 12+((int)(realtime*30)&1));
               
 	for (i=0 ; i<KNUMCOMMANDS ; i++)
 	{
@@ -2459,17 +2516,17 @@ void M_Keys_Draw (void)
 
 		if (keys[0] == -1)
 		{
-			M_Print (140, y, "---");
+			M_Print (180, y, "---");
 		}
 		else
 		{
 			name = Key_KeynumToString (keys[0]);
-			M_Print (140, y, name);
+			M_Print (180, y, name);
 			x = strlen(name) * 8;
 			if (keys[1] != -1)
 			{
-				M_Print (140 + x + 8, y, "or");
-				M_Print (140 + x + 32, y, Key_KeynumToString (keys[1]));
+				M_Print (180 + x + 8, y, "or");
+				M_Print (180 + x + 32, y, Key_KeynumToString (keys[1]));
 			}
 		}
 	}
@@ -2625,6 +2682,7 @@ void M_Video_Key (int key)
 
 int		help_page;
 #define	NUM_HELP_PAGES	6
+#define	KNUM_HELP_PAGES	2
 
 
 void M_Menu_Help_f (void)
@@ -2657,15 +2715,31 @@ void M_Help_Key (int key)
 	case K_UPARROW:
 	case K_RIGHTARROW:
 		m_entersound = true;
-		if (++help_page >= NUM_HELP_PAGES)
-			help_page = 0;
+		if (!kurok)
+		{
+			if (++help_page >= NUM_HELP_PAGES)
+				help_page = 0;
+		}
+		else
+		{
+			if (++help_page >= KNUM_HELP_PAGES)
+				help_page = 0;
+		}
 		break;
 
 	case K_DOWNARROW:
 	case K_LEFTARROW:
 		m_entersound = true;
-		if (--help_page < 0)
-			help_page = NUM_HELP_PAGES-1;
+		if (!kurok)
+		{
+			if (--help_page < 0)
+				help_page = NUM_HELP_PAGES-1;
+		}
+		else
+		{
+			if (--help_page < 0)
+				help_page = KNUM_HELP_PAGES-1;
+		}
 		break;
 	}
 
@@ -3825,7 +3899,7 @@ level_t		kuroklevels[] =
 	{"e1m2", "Base"},
 	{"e1m3", "Canyon Testing Grounds"},
 	{"e1m4", "Cavern Testing Grounds"},
-	{"e1m5", "Canyon Jungle"},
+	{"e1m5", "Underground Base"},
 	{"e1m6", "Experiment Rex"},
 
 	{"kdm1", "Canyon Arena"}, 	// 7
@@ -3949,14 +4023,15 @@ void M_Menu_GameOptions_f (void)
 }
 
 
-int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 88, 96, 112, 120};
-#define	NUM_GAMEOPTIONS	9
+int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 88, 96, 104, 112, 128, 136};
+#define	NUM_GAMEOPTIONS	11
 int		gameoptions_cursor;
 
 void M_GameOptions_Draw (void)
 {
 	qpic_t	*p,*b;
 	int		x;
+//	int		r;
 	
 	if (kurok)
         // line cursor
@@ -4042,40 +4117,52 @@ void M_GameOptions_Draw (void)
 	else
 		M_Print (160, 96, va("%i minutes", (int)timelimit.value));
 
-	M_PrintWhite (0, 112, "         Episode");
-   //MED 01/06/97 added hipnotic episodes
-   if (hipnotic)
-      M_Print (160, 112, hipnoticepisodes[startepisode].description);
-   //PGM 01/07/97 added rogue episodes
-   else if (rogue)
-      M_Print (160, 112, rogueepisodes[startepisode].description);
-   else if (kurok)
-      M_Print (160, 112, kurokepisodes[startepisode].description);
-   else
-      M_Print (160, 112, episodes[startepisode].description);
+	M_PrintWhite (0, 104, "        Auto Aim");
+	if (sv_aim.value == 1)
+		M_Print (160, 104, "Off");
+	else
+		M_Print (160, 104, "On");
 
-	M_PrintWhite (0, 120, "           Level");
+	M_PrintWhite (0, 112, "      Level Exits");
+	if (noexit.value == 1)
+		M_Print (160, 112, "Off");
+	else
+		M_Print (160, 112, "On");
+
+	M_PrintWhite (0, 128, "         Episode");
+   //MED 01/06/97 added hipnotic episodes
+   if (hipnotic)
+      M_Print (160, 128, hipnoticepisodes[startepisode].description);
+   //PGM 01/07/97 added rogue episodes
+   else if (rogue)
+      M_Print (160, 128, rogueepisodes[startepisode].description);
+   else if (kurok)
+      M_Print (160, 128, kurokepisodes[startepisode].description);
+   else
+      M_Print (160, 128, episodes[startepisode].description);
+
+	M_PrintWhite (0, 136, "           Level");
    //MED 01/06/97 added hipnotic episodes
    if (hipnotic)
    {
-      M_Print (160, 120, hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].description);
-      M_Print (160, 128, hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name);
+      M_Print (160, 136, hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].description);
+      M_Print (160, 144, hipnoticlevels[hipnoticepisodes[startepisode].firstLevel + startlevel].name);
    }
    //PGM 01/07/97 added rogue episodes
    else if (rogue)
    {
-      M_Print (160, 120, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].description);
-      M_Print (160, 128, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name);
+      M_Print (160, 136, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].description);
+      M_Print (160, 144, roguelevels[rogueepisodes[startepisode].firstLevel + startlevel].name);
    }
    else if (kurok)
    {
-      M_Print (160, 120, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].description);
-      M_Print (160, 128, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].name);
+      M_Print (160, 136, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].description);
+      M_Print (160, 144, kuroklevels[kurokepisodes[startepisode].firstLevel + startlevel].name);
    }
    else
    {
-      M_Print (160, 120, levels[episodes[startepisode].firstLevel + startlevel].description);
-      M_Print (160, 128, levels[episodes[startepisode].firstLevel + startlevel].name);
+      M_Print (160, 136, levels[episodes[startepisode].firstLevel + startlevel].description);
+      M_Print (160, 144, levels[episodes[startepisode].firstLevel + startlevel].name);
    }
    
 // line cursor
@@ -4161,6 +4248,25 @@ void M_NetStart_Change (int dir)
 		break;
 
 	case 7:
+/*
+		sv_aim.value += dir * 0.01;
+		if (sv_aim.value < 0.9)
+			sv_aim.value = 0.9;
+		if (sv_aim.value > 1)
+			sv_aim.value = 1;
+*/
+		Cvar_SetValue ("sv_aim", sv_aim.value + dir * 0.01);
+		if (sv_aim.value > 1)
+			Cvar_SetValue ("sv_aim", 0.99);
+		if (sv_aim.value < 0.99)
+			Cvar_SetValue ("sv_aim", 1);
+		break;
+
+	case 8:
+		Cvar_SetValue ("noexit", noexit.value ? 0 : 1);
+		break;
+
+	case 9:
 		startepisode += dir;
 	//MED 01/06/97 added hipnotic count
 		if (hipnotic)
@@ -4185,7 +4291,7 @@ void M_NetStart_Change (int dir)
 		startlevel = 0;
 		break;
 
-	case 8:
+	case 10:
 		startlevel += dir;
     //MED 01/06/97 added hipnotic episodes
 		if (hipnotic)

@@ -248,7 +248,8 @@ void R_Init (void)
     Cvar_RegisterVariable (&r_i_model_animation);
     Cvar_RegisterVariable (&r_i_model_transform);
     Cvar_RegisterVariable (&r_model_contrast);
-    
+    Cvar_RegisterVariable (&r_model_brightness);
+
 	Cvar_RegisterVariable (&gl_keeptjunctions);
 /*
 	Cvar_RegisterVariable (&gl_finish);

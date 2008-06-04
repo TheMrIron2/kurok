@@ -264,10 +264,12 @@ extern	cvar_t	cl_nolerp;
 extern	cvar_t	cl_pitchdriftspeed;
 extern	cvar_t	lookspring;
 extern	cvar_t	lookstrafe;
+extern  cvar_t  lookcenter;
 extern	cvar_t	in_sensitivity;
 extern	cvar_t	in_tolerance;
 extern	cvar_t	in_acceleration;
 
+extern  cvar_t  cl_autoaim;
 
 extern	cvar_t	m_pitch;
 extern	cvar_t	m_yaw;

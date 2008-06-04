@@ -292,60 +292,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
 
-	//
-	// look for a cached version
-	//
-	char	cache[MAX_QPATH];
-	sprintf(cache, "%s/models/", com_gamedir);
-	COM_StripExtension (m->name+strlen("progs/"), cache+strlen(cache));
-	strcat (cache, ".ms2");
-
-	int	f;
-	Sys_FileOpenRead(cache, &f);	
-	if (f >= 0)
-	{
-		Sys_FileRead(f, &numcommands, 4);
-		Sys_FileRead(f, &numorder, 4);
-		Sys_FileRead(f, &commands, numcommands * sizeof(commands[0]));
-		Sys_FileRead(f, &vertexorder, numorder * sizeof(vertexorder[0]));
-		Sys_FileClose(f);
-	}
-	else
-	{
-		char dirName[MAX_OSPATH];
-
-		//
-		// build it from scratch
-		//
-		Con_Printf ("meshing %s...\n",m->name);
-
-		BuildTris ();		// trifans or lists
-
-		Con_Printf ("FINISHED meshing %s...\n",m->name);
-
-		// Create a dir to put the cache file in.
-		memset(dirName, 0, MAX_OSPATH);
-		sprintf(dirName, "%s/models", com_gamedir);
-		Sys_mkdir(dirName);
-
-		//
-		// save out the cached version
-		//
-		f = Sys_FileOpenWrite(cache);
-		if (f >= 0)
-		{
-			Sys_FileWrite(f, &numcommands, 4);
-			Sys_FileWrite(f, &numorder, 4);
-			Sys_FileWrite(f, &commands, numcommands * sizeof(commands[0]));
-			Sys_FileWrite(f, &vertexorder, numorder * sizeof(vertexorder[0]));
-			Sys_FileClose(f);
-		}
-		else
-		{
-			Sys_Error("Couldn't open %s for writing", cache);
-		}
-	}
-
+	BuildTris ();		// trifans or lists
 
 	// save the data out
 

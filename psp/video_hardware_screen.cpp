@@ -92,6 +92,7 @@ cvar_t		scr_showram = {"showram","1"};
 cvar_t		scr_showturtle = {"showturtle","0"};
 cvar_t		scr_showpause = {"showpause","1"};
 cvar_t		scr_printspeed = {"scr_printspeed","8"};
+cvar_t		scr_loadscreen = {"scr_loadscreen","1", qtrue};
 
 extern "C"	cvar_t	crosshair;
 extern "C"  cvar_t  v_idlescale;
@@ -388,7 +389,7 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&scr_showpause);
 	Cvar_RegisterVariable (&scr_centertime);
 	Cvar_RegisterVariable (&scr_printspeed);
-
+	Cvar_RegisterVariable (&scr_loadscreen);
 //
 // register our commands
 //
@@ -919,8 +920,9 @@ void SCR_UpdateScreen (void)
 		
 		SCR_DrawConsole ();
 
-//		if (kurok)
-//            SCR_DrawLoadScreen();
+		if (kurok)
+			if(scr_loadscreen.value)
+            	SCR_DrawLoadScreen();
 
 		M_Draw ();
 	}

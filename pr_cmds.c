@@ -1360,7 +1360,10 @@ void PF_aim (void)
 
 // try all possible entities
 	VectorCopy (dir, bestdir);
-	bestdist = sv_aim.value;
+	if (cl_autoaim.value)
+		bestdist = sv_aim.value;
+	else
+		bestdist = 1;
 	bestent = NULL;
 	
 	check = NEXT_EDICT(sv.edicts);
@@ -1390,7 +1393,6 @@ void PF_aim (void)
 	
 	if (bestent)
 	{
-//	    Con_Printf ("Locked On! \n");
 		VectorSubtract (bestent->v.origin, ent->v.origin, dir);
 //		dist = DotProduct (dir, pr_global_struct->v_forward);
 //		VectorScale (pr_global_struct->v_forward, dist, end);

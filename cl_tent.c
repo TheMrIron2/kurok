@@ -188,7 +188,8 @@ void CL_ParseTEnt (void)
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 20);
+		if(!kurok)
+			R_RunParticleEffect (pos, vec3_origin, 0, 20);
 		break;
 		
 	case TE_EXPLOSION:			// rocket explosion
