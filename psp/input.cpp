@@ -88,6 +88,8 @@ using namespace quake::input;
 
 extern cvar_t in_freelook_analog;
 extern cvar_t in_analog_strafe;
+
+extern cvar_t in_zoom_adjust;
 extern cvar_t in_x_axis_adjust;
 extern cvar_t in_y_axis_adjust;
 
@@ -314,10 +316,14 @@ void IN_Move (usercmd_t *cmd)
 	// Convert the inputs to floats in the range [-1, 1].
 	// Implement the dead zone.
 	float deadZone = in_tolerance.value;
-	float speed = in_sensitivity.value;
+	float speed = in_sensitivity.value - in_zoom_adjust.value;
 	float acceleration = in_acceleration.value;
+
 	int   x_adjust = in_x_axis_adjust.value;
 	int   y_adjust = in_y_axis_adjust.value;
+
+	if (speed <= 0)
+		speed = 0;
 
     float x = IN_CalcInput(pad.Lx, (speed *0.1) + x_adjust, deadZone, acceleration);
 	float y = IN_CalcInput(pad.Ly, (speed *0.1) + y_adjust, deadZone, acceleration);

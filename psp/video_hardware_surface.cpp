@@ -614,6 +614,17 @@ void R_RenderBrushPoly (msurface_t *fa)
 	if (fa->flags & SURF_UNDERWATER)
 		DrawGLWaterPoly (fa->polys);
 
+	else if (!Q_strncmp(fa->texinfo->texture->name,"light",5))
+	{
+		if (kurok)
+		{
+			DrawGLPoly (fa->polys);
+			return;
+		}
+		else
+			DrawGLPoly (fa->polys);
+	}
+
 	else if (!Q_strncmp(fa->texinfo->texture->name,"env",3))
 	{
 		if (kurok)

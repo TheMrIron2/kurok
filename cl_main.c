@@ -26,13 +26,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // these two are not intended to be set directly
 cvar_t	cl_name = {"_cl_name", "player", true};
-cvar_t	cl_color = {"_cl_color", "0", true};
+cvar_t	cl_color = {"_cl_color", "13", true};
 
 cvar_t	cl_shownet = {"cl_shownet","0"};	// can be 0, 1, or 2
 cvar_t	cl_nolerp = {"cl_nolerp","0"};
 
+cvar_t	cl_autoaim = {"cl_autoaim", "1", true};
+
 cvar_t	lookspring = {"lookspring","0", true};
 cvar_t	lookstrafe = {"lookstrafe","0", true};
+cvar_t	lookcenter = {"lookcenter","1", true};
 cvar_t	in_sensitivity = {"sensitivity","3", true};
 cvar_t	in_tolerance = {"tolerance","0.25", true};
 cvar_t	in_acceleration = {"acceleration","1.0", true};
@@ -45,6 +48,8 @@ cvar_t	m_side = {"m_side","0.8", true};
 cvar_t	in_freelook_analog = {"in_freelook_analog", "0", true};
 cvar_t	in_disable_analog = {"in_disable_analog", "0", true};
 cvar_t	in_analog_strafe = {"in_analog_strafe", "0", true};
+
+cvar_t  in_zoom_adjust = {"in_zoom_adjust", "0", true};
 cvar_t  in_x_axis_adjust = {"in_x_axis_adjust", "0", true};
 cvar_t  in_y_axis_adjust = {"in_y_axis_adjust", "0", true};
 
@@ -760,8 +765,10 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_anglespeedkey);
 	Cvar_RegisterVariable (&cl_shownet);
 	Cvar_RegisterVariable (&cl_nolerp);
+	Cvar_RegisterVariable (&cl_autoaim);
 	Cvar_RegisterVariable (&lookspring);
 	Cvar_RegisterVariable (&lookstrafe);
+	Cvar_RegisterVariable (&lookcenter);
 
 	Cvar_RegisterVariable (&in_sensitivity);
 	Cvar_RegisterVariable (&in_tolerance);
@@ -769,6 +776,8 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&in_freelook_analog);
 	Cvar_RegisterVariable (&in_disable_analog);
 	Cvar_RegisterVariable (&in_analog_strafe);
+
+	Cvar_RegisterVariable (&in_zoom_adjust);
 	Cvar_RegisterVariable (&in_x_axis_adjust);
 	Cvar_RegisterVariable (&in_y_axis_adjust);
 

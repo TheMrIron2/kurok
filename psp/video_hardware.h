@@ -157,6 +157,7 @@ extern	cvar_t	gl_keeptjunctions;
 extern  cvar_t  r_i_model_animation;
 extern  cvar_t  r_i_model_transform;
 extern  cvar_t  r_model_contrast;
+extern  cvar_t  r_model_brightness;
 extern	cvar_t	fog;
 extern	cvar_t	r_vsync;
 extern  cvar_t	r_dithering;

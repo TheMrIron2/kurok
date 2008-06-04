@@ -468,6 +468,9 @@ void Draw_Crosshair(void)
     extern cvar_t crosshair;
     extern cvar_t cl_crossx;
     extern cvar_t cl_crossy;
+
+	extern cvar_t scr_fov;
+
     extern cvar_t in_x_axis_adjust;
     extern cvar_t in_y_axis_adjust;
     extern cvar_t in_freelook_analog;
@@ -491,25 +494,25 @@ void Draw_Crosshair(void)
 
 	        else if (crosshair.value == 4)
 				pic = Draw_CachePic ("gfx/ch_tekbo.lmp");
-	
+
 	        else if (crosshair.value == 5)
 				pic = Draw_CachePic ("gfx/ch_sgun.lmp");
-		
+
 	        else if (crosshair.value == 6)
 				pic = Draw_CachePic ("gfx/ch_ssgun.lmp");
-		
+
 	        else if (crosshair.value == 7)
 				pic = Draw_CachePic ("gfx/ch_ngun.lmp");
-		
+
 	        else if (crosshair.value == 8)
 				pic = Draw_CachePic ("gfx/ch_sngun.lmp");
-		
+
 			else if (crosshair.value == 9)
 				pic = Draw_CachePic ("gfx/ch_gl.lmp");
-		
+
 			else if (crosshair.value == 10)
 				pic = Draw_CachePic ("gfx/ch_rl.lmp");
-		
+
 			else if (crosshair.value == 11)
 				pic = Draw_CachePic ("gfx/ch_light.lmp");
 
@@ -519,23 +522,28 @@ void Draw_Crosshair(void)
 			double crosshair_static_x = (vid.width - pic->width)/2 + cl_crossx.value;
 			double crosshair_static_y = (vid.height - pic->height)/2 + cl_crossy.value;
 
-			if (!in_disable_analog.value)
+			if (scr_fov.value == 90)
 			{
-            	if (in_freelook_analog.value)
-            	{
-                	if (m_pitch.value < 0)
-                    	Draw_Pic (int(crosshair_x), int(crosshair_y_i), pic);
-                	else
-                    	Draw_Pic (int(crosshair_x), int(crosshair_y), pic);
-            	}
-            	else
-            	{
-                	if (!in_analog_strafe.value)
-                    	Draw_Pic (int(crosshair_x), int(crosshair_static_y), pic);
-                	else
-                    	Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
-            	}
-        	}
+				if (!in_disable_analog.value)
+				{
+	            	if (in_freelook_analog.value)
+	            	{
+	                	if (m_pitch.value < 0)
+	                    	Draw_Pic (int(crosshair_x), int(crosshair_y_i), pic);
+	                	else
+	                    	Draw_Pic (int(crosshair_x), int(crosshair_y), pic);
+	            	}
+	            	else
+	            	{
+	                	if (!in_analog_strafe.value)
+	                    	Draw_Pic (int(crosshair_x), int(crosshair_static_y), pic);
+	                	else
+	                    	Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
+	            	}
+	        	}
+        		else
+            		Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
+			}
         	else
             	Draw_Pic (int(crosshair_static_x), int(crosshair_static_y), pic);
     	}

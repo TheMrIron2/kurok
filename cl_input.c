@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // rights reserved.
 
 #include "quakedef.h"
-
+#include <pspctrl.h>
 /*
 ===============================================================================
 
@@ -120,7 +120,7 @@ void IN_KLookUp (void) {KeyUp(&in_klook);}
 void IN_MLookDown (void) {KeyDown(&in_mlook);}
 void IN_MLookUp (void) {
 KeyUp(&in_mlook);
-if ( !(in_mlook.state&1) &&  lookspring.value)
+if ( !(in_mlook.state&1) &&  lookspring.value && !lookcenter.value)
 	V_StartPitchDrift();
 }
 void IN_UpDown(void) {KeyDown(&in_up);}
@@ -331,8 +331,6 @@ void CL_BaseMove (usercmd_t *cmd)
 #endif
 }
 
-
-
 /*
 ==============
 CL_SendMove
@@ -360,7 +358,15 @@ void CL_SendMove (usercmd_t *cmd)
 
 	for (i=0 ; i<3 ; i++)
 		MSG_WriteAngle (&buf, cl.viewangles[i]);
-	
+/*
+	// Read the pad state.
+	SceCtrlData pad;
+	sceCtrlPeekBufferPositive(&pad, 1);
+
+    MSG_WriteAngle (&buf, cl.viewangles[PITCH] + ((pad.Ly - 128)));
+    MSG_WriteAngle (&buf, cl.viewangles[YAW] + ((pad.Lx - 128)));
+    MSG_WriteAngle (&buf, cl.viewangles[ROLL]);
+*/
     MSG_WriteShort (&buf, cmd->forwardmove);
     MSG_WriteShort (&buf, cmd->sidemove);
     MSG_WriteShort (&buf, cmd->upmove);

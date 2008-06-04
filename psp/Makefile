@@ -24,15 +24,15 @@ endif
 PSPLIBSDIR		= $(PSPSDK)/..
 
 # Project specific variables.
-VERSION		= 0.1 64MB
+VERSION		= 0.3 64MB
 SRC_DIR		= ..
 OBJ_DIR		= slim
 TARGET		= $(OBJ_DIR)/Quake
 PSP_LARGE_MEMORY = 1
 PSP_EBOOT_TITLE	= Kurok $(VERSION)
-#PSP_EBOOT_ICON	= pics/icon.png
-#PSP_EBOOT_PIC1	= pics/pic1.png
-#PSP_EBOOT_SFO	= $(OBJ_DIR)/PARAM.SFO
+PSP_EBOOT_ICON	= pics/icon.png
+PSP_EBOOT_PIC1	= pics/pic1.png
+PSP_EBOOT_SFO	= $(OBJ_DIR)/PARAM.SFO
 PSP_EBOOT		= $(OBJ_DIR)/EBOOT.PBP
 DIST_DIR		= dist
 DIST_FILES		= readme.html gpl.txt Quake/EBOOT.PBP
@@ -178,7 +178,8 @@ ASFLAGS = $(CFLAGS) -c
 
 # Libs.
 GU_LIBS 	= -lpspgum_vfpu -lpspvfpu -lpspgu
-AUDIO_LIBS	= -lpspaudiolib -lpspaudio m33libs/libpspaudiocodec.a m33libs/libpspkubridge.a madlibs/libmad.a
+AUDIO_LIBS	= -lpspaudiolib -lpspaudio m33libs/libpspaudiocodec.a m33libs/libpspkubridge.a
+#madlibs/libmad.a
 MISC_LIBS	= -lpsprtc -lpsppower
 STD_LIBS	= -lstdc++ -lm -lc
 LIBS		= $(GU_LIBS) $(AUDIO_LIBS) $(MISC_LIBS) $(STD_LIBS) -lpspwlan -lpspnet_adhoc -lpspnet_adhocctl

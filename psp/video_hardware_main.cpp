@@ -119,6 +119,7 @@ cvar_t	r_test = {"r_test","0", qtrue}; 						// developer temp test cvar
 cvar_t  r_i_model_animation = { "r_i_model_animation", "1", qtrue}; // Toggle smooth model animation
 cvar_t  r_i_model_transform = { "r_i_model_transform", "1", qtrue}; // Toggle smooth model movement
 cvar_t  r_model_contrast = { "r_model_contrast", "0", qtrue};       // Toggle high contrast model lighting
+cvar_t  r_model_brightness = { "r_model_brightness", "1", qtrue};   // Toggle high brightness model lighting
 
 /*
 cvar_t	gl_finish = {"gl_finish","0"};
@@ -401,7 +402,7 @@ void R_DrawSpriteModel (entity_t *e)
     additive = false;
 	filter = false;
 
-	if (psprite->beamlength == 10)
+	if (psprite->beamlength == 10) // we use the beam length of sprites, since they are unused by quake anyway.
 		additive = true;
 
 	if (psprite->beamlength == 20)
@@ -410,22 +411,20 @@ void R_DrawSpriteModel (entity_t *e)
 	// Bind the texture.
 	GL_Bind(frame->gl_texturenum);
 
-	sceGuEnable(GU_ALPHA_TEST);
 	sceGuEnable(GU_BLEND);
 	sceGuDisable(GU_FOG);
-   	sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 
     if (additive)
 	{
 		sceGuDepthMask(GU_TRUE);
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
-		sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
+		sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGB);
 	}
     else if (filter)
 	{
 		sceGuDepthMask(GU_TRUE);
 		sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_SRC_COLOR, GU_FIX, 0, 0xFFFFFFFF);
-        sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
+        sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGB);
 	}
 	else
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
@@ -476,7 +475,6 @@ void R_DrawSpriteModel (entity_t *e)
 		GU_TEXTURE_32BITF | GU_VERTEX_32BITF,
 		4, 0, vertices);
 
-	sceGuDisable(GU_ALPHA_TEST);
 	sceGuDepthMask(GU_FALSE);
 	sceGuDisable(GU_BLEND);
 	sceGuEnable(GU_FOG);
@@ -1017,6 +1015,7 @@ void R_DrawAliasModel (entity_t *e)
 	// HACK HACK HACK -- no fullbright colors, so make torches and projectiles full light
 	if (!strcmp (clmodel->name, "progs/eyes.mdl") ||
 	    !strcmp (clmodel->name, "progs/flame.mdl") ||
+	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
 	    !strcmp (clmodel->name, "progs/k_spike.mdl") ||
 	    !strcmp (clmodel->name, "progs/s_spike.mdl") ||
 	    !strcmp (clmodel->name, "progs/spike.mdl")) 
@@ -1040,13 +1039,16 @@ void R_DrawAliasModel (entity_t *e)
 	}
 
 	if (!strcmp (clmodel->name, "progs/smoke.mdl") ||
+	    !strcmp (clmodel->name, "progs/glass1.mdl") ||
+	    !strcmp (clmodel->name, "progs/glass2.mdl") ||
+	    !strcmp (clmodel->name, "progs/glass3.mdl") ||
 	    !strcmp (clmodel->name, "progs/debris.mdl"))
 	{
 		filter = true;
 	}
 
 	if (!strcmp (clmodel->name, "progs/raptor.mdl") ||
-	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
+//	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush1.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush2.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush3.mdl"))
@@ -1055,7 +1057,11 @@ void R_DrawAliasModel (entity_t *e)
 	}
 
 	if (!strcmp (clmodel->name, "progs/raptor.mdl") ||
-	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
+//	    !strcmp (clmodel->name, "progs/player.mdl") ||
+//	    !strcmp (clmodel->name, "progs/p_knife.mdl") ||
+//	    !strcmp (clmodel->name, "progs/p_pistol.mdl") ||
+//	    !strcmp (clmodel->name, "progs/p_tekbow.mdl") ||
+//	    !strcmp (clmodel->name, "progs/palmleav.mdl") ||
 	    !strcmp (clmodel->name, "progs/v_axe.mdl") ||
 	    !strcmp (clmodel->name, "progs/v_axea.mdl") ||
 	    !strcmp (clmodel->name, "progs/v_bow.mdl") ||
@@ -1068,13 +1074,16 @@ void R_DrawAliasModel (entity_t *e)
 	    !strcmp (clmodel->name, "progs/v_rock2.mdl") ||
 	    !strcmp (clmodel->name, "progs/v_light.mdl") ||
 	    !strcmp (clmodel->name, "progs/v_uzi.mdl") ||
+	    !strcmp (clmodel->name, "progs/crate.mdl") ||
+	    !strcmp (clmodel->name, "progs/pc.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush.mdl") ||
 	    !strcmp (clmodel->name, "progs/title.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush1.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush2.mdl") ||
 	    !strcmp (clmodel->name, "progs/bush3.mdl"))
 	{
-		fixlight = true;
+        if (r_model_brightness.value)
+			fixlight = true;
 	}
 
 	// light lerping - pox@planetquake.com
@@ -1149,6 +1158,8 @@ void R_DrawAliasModel (entity_t *e)
 	if (force_fullbright)
 	{
 	    sceGuEnable(GU_BLEND);
+		sceGuEnable(GU_ALPHA_TEST);
+		sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
     }
     else if (additive)
@@ -1180,21 +1191,24 @@ void R_DrawAliasModel (entity_t *e)
     else
         R_SetupAliasFrame (currententity->frame, paliashdr);
 
-	if (fixlight) //Draws another pass, ouch!
+	if (!force_fullbright)
 	{
-		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
-        sceGuEnable(GU_BLEND);
-//		sceGuDepthMask(GU_TRUE);
+		if (fixlight) //Draws another pass, ouch!
+		{
+			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
+	        sceGuEnable(GU_BLEND);
+	//		sceGuDepthMask(GU_TRUE);
 
-	    if (r_i_model_animation.value)
-	        R_SetupAliasBlendedFrame (currententity->frame, paliashdr, currententity);
-	    else
-	        R_SetupAliasFrame (currententity->frame, paliashdr);
+		    if (r_i_model_animation.value)
+		        R_SetupAliasBlendedFrame (currententity->frame, paliashdr, currententity);
+		    else
+		        R_SetupAliasFrame (currententity->frame, paliashdr);
 
-		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-		sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
-        sceGuDisable(GU_BLEND);
-//		sceGuDepthMask(GU_FALSE);
+			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+			sceGuTexFunc(GU_TFX_REPLACE , GU_TCC_RGB);
+	        sceGuDisable(GU_BLEND);
+	//		sceGuDepthMask(GU_FALSE);
+		}
 	}
 
 	if (force_fullbright || additive || filter || alphafunc)
@@ -1650,9 +1664,8 @@ void R_RenderScene (void)
     else
     {
         sceGuEnable ( GU_FOG );
-        sceGuFog ( r_refdef.fog_start, r_refdef.fog_end, GU_COLOR( r_refdef.fog_red * 0.01f, r_refdef.fog_green * 0.01f, r_refdef.fog_blue * 0.01f, 1.0f ) ); // Custom Fog
-    }
-
+        sceGuFog ( r_refdef.fog_start, r_refdef.fog_end, GU_COLOR( r_refdef.fog_red * 0.01f, r_refdef.fog_green * 0.01f, r_refdef.fog_blue * 0.01f, 1.0f ) );
+	}
 	R_DrawWorld ();		// adds static entities to the list
 
 	S_ExtraUpdate ();	// don't let sound get messed up if going slow
@@ -1672,7 +1685,6 @@ void R_RenderScene (void)
 #endif
 
 }
-
 
 /*
 =============

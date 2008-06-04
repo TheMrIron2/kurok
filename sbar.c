@@ -1153,9 +1153,6 @@ void Sbar_Draw (void)
     {
         if (sb_lines >= 24)
             Sbar_DrawPic (0, 0, sb_sbar);
-        else
-        {
-        }
     }
     
    // keys (hipnotic only)
@@ -1314,18 +1311,19 @@ void Sbar_Draw (void)
                 else if (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING) // Remote Mines
                     Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 
-                else if (cl.stats[STAT_ACTIVEWEAPON] == IT_TEKBOW) // Tekbow
-                    Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
-
-                else // Axe / Tekbow
+                else if (cl.stats[STAT_AMMO] <= 0) // Axe / Bow
                 {
+
                 }
-//	             Con_Printf ("Current Weapon Number %i\n", cl.stats[STAT_ACTIVEWEAPON]);
+                else
+                    Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
             }
         }
         else
             Sbar_DrawNum (248, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 	}
+
+//	Con_Printf ("I am an %i! woohoo!\n", cl.stats[STAT_ACTIVEWEAPON]);
 
 //	if (vid.width > 320) {
 		if (cl.gametype == GAME_DEATHMATCH)
