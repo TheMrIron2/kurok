@@ -202,7 +202,12 @@ void CL_ParseTEnt (void)
 		dl->radius = 350;
 		dl->die = cl.time + 0.5;
 		dl->decay = 300;
-//        dl->colour[0] = 0.2; dl->colour[1] = 0.2; dl->colour[2] = 0.8;
+		if(kurok)
+		{
+        	dl->color[0] = MSG_ReadCoord ();
+			dl->color[1] = MSG_ReadCoord ();
+			dl->color[2] = MSG_ReadCoord ();
+		}
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 		break;
 		
@@ -211,7 +216,17 @@ void CL_ParseTEnt (void)
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 		R_BlobExplosion (pos);
-
+		if(kurok)
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (pos, dl->origin);
+			dl->radius = 150;
+			dl->die = cl.time + 0.75;
+			dl->decay = 200;
+        	dl->color[0] = MSG_ReadCoord ();
+			dl->color[1] = MSG_ReadCoord ();
+			dl->color[2] = MSG_ReadCoord ();
+		}
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 		break;
 

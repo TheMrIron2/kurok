@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <pspgum.h>
 #include <pspkernel.h>
 #include <pspdebug.h>
-#include "m33libs/kubridge.h"
+#include "m33libs/include/kubridge.h"
 
 extern "C"
 {
@@ -47,8 +47,11 @@ namespace quake
 	namespace video
 	{
 		// Types.
-//		typedef ScePspRGB565	pixel;
+#ifdef NORMAL_MODEL
+		typedef ScePspRGB565	pixel;
+#else
 		typedef ScePspRGBA8888	pixel;
+#endif
 		typedef u8				texel;
 		typedef u16				depth_value;
 
@@ -63,7 +66,6 @@ namespace quake
 		//! The GU display list.
 		//! @note	Aligned to 64 bytes so it doesn't share a cache line with anything.
 		unsigned int ALIGNED(64)	display_list[262144];
-//		int cable, i, u, width, height, displaymode;
 	}
 }
 
@@ -73,9 +75,23 @@ using namespace quake::video;
 // Regular globals.
 ScePspRGBA8888 ALIGNED(16)	d_8to24table[palette_size];
 ScePspRGBA8888 ALIGNED(16)	d_8to24tableLM[palette_size];
+ScePspRGBA8888 ALIGNED(16)	d_8to24tableSKY[palette_size];
 
-//int pspDveMgrCheckVideoOut();
-//int pspDveMgrSetVideoOut(int, int, int, int, int, int, int);
+void VID_InitPaleteSKY(unsigned char* palette) {
+	// Convert the palette to PSP format.
+	for (ScePspRGBA8888* color = &d_8to24tableSKY[0]; color < &d_8to24tableSKY[palette_size]; ++color)
+	{
+		const unsigned int r = *palette++;
+		const unsigned int g = *palette++;
+		const unsigned int b = *palette++;
+		*color = GU_RGBA(r, g, b, 0xff);
+	}
+
+	// Upload the palette.
+	sceGuClutMode(GU_PSM_8888, 0, palette_size - 1, 0);
+	sceKernelDcacheWritebackRange(d_8to24tableSKY, sizeof(d_8to24tableSKY));
+	sceGuClutLoad(palette_size / 8, d_8to24tableSKY);
+}
 
 void VID_InitPaleteLM() {
 	// Convert the palette to PSP format.
@@ -84,6 +100,13 @@ void VID_InitPaleteLM() {
 	{
 		*color2 = GU_RGBA(i, i, i, i);
 	}
+}
+
+void VID_SetPaletteSKY() {
+	// Upload the palette.
+	sceGuClutMode(GU_PSM_8888, 0, palette_size - 1, 0);
+	sceKernelDcacheWritebackRange(d_8to24tableSKY, sizeof(d_8to24tableSKY));
+	sceGuClutLoad(palette_size / 8, d_8to24tableSKY);
 }
 
 void VID_SetPaletteLM() {
@@ -111,7 +134,7 @@ void VID_SetPalette(unsigned char* palette)
 		*color = GU_RGBA(r, g, b, 0xff);
 	}
 
-	// Color 255 is transparent black.
+	// Make color 255 transparent black.
 	// This is a bit of a dirty hack.
 	d_8to24table[255] = 0;
 
@@ -159,8 +182,11 @@ void VID_Init(unsigned char* palette)
 		void* const draw_buffer_in_vram		= reinterpret_cast<char*>(draw_buffer) - reinterpret_cast<std::size_t>(vram_base);
 		void* const depth_buffer_in_vram	= reinterpret_cast<char*>(depth_buffer) - reinterpret_cast<std::size_t>(vram_base);
 
+#ifdef NORMAL_MODEL
+        sceGuDrawBuffer(GU_PSM_5650, draw_buffer_in_vram, 512);
+#else
         sceGuDrawBuffer(GU_PSM_8888, draw_buffer_in_vram, 512);
-//        sceGuDrawBuffer(GU_PSM_5650, draw_buffer_in_vram, 512);
+#endif
 
 		sceGuDispBuffer(screen_width, screen_height, display_buffer_in_vram, 512);
 		sceGuDepthBuffer(depth_buffer_in_vram, 512);
@@ -178,7 +204,7 @@ void VID_Init(unsigned char* palette)
 
 		// Set up clearing.
 		sceGuClearDepth(65535);
-		sceGuClearColor(GU_RGBA(0x10,0x20,0x40,0xff));
+        sceGuClearColor(GU_COLOR(0.25f,0.25f,0.25f,0.5f));
 
 		// Set up depth.
 		sceGuDepthRange(0, 65535);
@@ -204,7 +230,7 @@ void VID_Init(unsigned char* palette)
 		// Set up blending.
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 	}
-	
+
 	sceGuFinish();
 	sceGuSync(0,0);
 
@@ -230,14 +256,14 @@ void VID_Init(unsigned char* palette)
 	vid.recalc_refdef	= 0;
 	vid.rowbytes		= 0;
 	vid.width			= screen_width;
-	
+
 	// Start a render.
 	sceGuStart(GU_DIRECT, display_list);
 
 	// Set the palette.
 	VID_SetPalette(palette);
 	VID_InitPaleteLM();
-	
+
 	Sys_Printf("VID_Init OK\n");
 }
 
@@ -281,7 +307,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
 	*x = 2048;
 	*y = 2048;
-    
+
 	if (r_antialias.value)
 	{
 	    *width = screen_width + (r_framecount&1)*2;   // For fake antialising effect
@@ -332,7 +358,6 @@ void D_StartParticles (void)
 		sceGuEnable(GU_BLEND);
 		sceGuDisable(GU_FOG);
 		sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
-    	sceGuAlphaFunc(GU_GREATER, 0, 0xff);
 
 		if (kurok)
 			sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xFFFFFFFF);
@@ -362,10 +387,10 @@ static int BufSize = 0;
 
 psp_particle* D_CreateBuffer (int size) {
 	psp_particle* const vertices = static_cast<psp_particle*>(sceGuGetMemory(size*sizeof(psp_particle)));
-	
+
 	BufSize = size;
 	BufIdx  = 0;
-	
+
 	return vertices;
 }
 
@@ -376,44 +401,44 @@ void D_DeleteBuffer (psp_particle* vertices) {
     	BufIdx = 0;
     	BufSize = -1;
     }
-		
+
 }
 
 int D_DrawParticleBuffered (psp_particle* vertices, particle_t *pparticle, vec3_t up, vec3_t right, float scale) {
 	unsigned int color = d_8to24table[static_cast<int>(pparticle->color)];
 	int i = BufIdx;
-	
+
 	vertices[i].first.x = pparticle->org[0];
 	vertices[i].first.y = pparticle->org[1];
 	vertices[i].first.z = pparticle->org[2];
-	vertices[i].first.s = 0.0;              
-	vertices[i].first.t = 0.0;              
-	vertices[i].first.color = color;        
-			
-	vertices[i].second.x = pparticle->org[0] + scale*(up[0] + right[0]);        
-	vertices[i].second.y = pparticle->org[1] + scale*(up[1] + right[1]);        
-	vertices[i].second.z = pparticle->org[2] + scale*(up[2] + right[2]);        
-	vertices[i].second.s = 1.0;                                                 
-	vertices[i].second.t = 1.0;                                                 
-	vertices[i].second.color = color;                                           
-               
+	vertices[i].first.s = 0.0;
+	vertices[i].first.t = 0.0;
+	vertices[i].first.color = color;
+
+	vertices[i].second.x = pparticle->org[0] + scale*(up[0] + right[0]);
+	vertices[i].second.y = pparticle->org[1] + scale*(up[1] + right[1]);
+	vertices[i].second.z = pparticle->org[2] + scale*(up[2] + right[2]);
+	vertices[i].second.s = 1.0;
+	vertices[i].second.t = 1.0;
+	vertices[i].second.color = color;
+
     BufIdx++;
-    
+
     if (BufIdx >= BufSize) {
     	sceGuDrawArray(GU_SPRITES, GU_VERTEX_32BITF|GU_TEXTURE_32BITF|GU_COLOR_8888, BufSize, 0, vertices);
     	BufIdx = 0;
     	BufSize = -1;
     	return -1;
     }
-    
-    return BufIdx;    	            
-}                      
-                       
-                       
+
+    return BufIdx;
+}
+
+
 void D_DrawParticle (particle_t *pparticle, vec3_t up, vec3_t right, float scale)
 {
 	unsigned int color = d_8to24table[static_cast<int>(pparticle->color)];
-	
+
 	struct part_vertex {
 		float s, t;
 		unsigned int color;
@@ -428,26 +453,26 @@ void D_DrawParticle (particle_t *pparticle, vec3_t up, vec3_t right, float scale
 	vertices[0].s = 0.0;
 	vertices[0].t = 0.0;
 	vertices[0].color = color;
-	
+
 	vertices[1].x = pparticle->org[0] + scale*(up[0] + right[0]);
 	vertices[1].y = pparticle->org[1] + scale*(up[1] + right[1]);
 	vertices[1].z = pparticle->org[2] + scale*(up[2] + right[2]);
 	vertices[1].s = 1.0;
 	vertices[1].t = 1.0;
 	vertices[1].color = color;
-	
+
 	sceGuDrawArray(GU_SPRITES, GU_VERTEX_32BITF|GU_TEXTURE_32BITF|GU_COLOR_8888, 2, 0, vertices);
 
 }
 
 
-/* 
-============================================================================== 
- 
-						SCREEN SHOTS 
- 
-============================================================================== 
-*/ 
+/*
+==============================================================================
+
+						SCREEN SHOTS
+
+==============================================================================
+*/
 
 typedef struct _TargaHeader {
 	unsigned char 	id_length, colormap_type, image_type;
@@ -458,34 +483,34 @@ typedef struct _TargaHeader {
 } TargaHeader;
 
 
-/* 
-================== 
+/*
+==================
 SCR_ScreenShot_f
-================== 
-*/  
-void SCR_ScreenShot_f (void) 
+==================
+*/
+void SCR_ScreenShot_f (void)
 {
 	byte		*buffer;
-	char		pcxname[80]; 
+	char		pcxname[80];
 	char		checkname[MAX_OSPATH];
-// 
-// find a file name to save it to 
-// 
+//
+// find a file name to save it to
+//
     if (kurok)
 	    strcpy(pcxname,"sshot00.tga");
     else
         strcpy(pcxname,"quake00.tga");
-	
+
 	int i;
-	for (i=0 ; i<=99 ; i++) 
-	{ 
-		pcxname[5] = i/10 + '0'; 
-		pcxname[6] = i%10 + '0'; 
+	for (i=0 ; i<=99 ; i++)
+	{
+		pcxname[5] = i/10 + '0';
+		pcxname[6] = i%10 + '0';
 		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
 		if (Sys_FileTime(checkname) == -1)
 			break;	// file doesn't exist
-	} 
-	if (i==100) 
+	}
+	if (i==100)
 	{
 		Con_Printf ("SCR_ScreenShot_f: Couldn't create a TGA file\n");
 		return;
@@ -510,22 +535,21 @@ void SCR_ScreenShot_f (void)
 		{
 			const pixel argb = *src++;
 
-// For RGB 888 pixel format
-
-			buffer[i++]	= (argb >> 16) & 0xff;
-			buffer[i++]	= (argb >> 8) & 0xff;
-			buffer[i++]	= argb & 0xff;
-
+#ifdef NORMAL_MODEL
 // For RGB 565 pixel format
-/*
 			buffer[i++]	= ((argb >> 11) & 0x1f) << 3;
 			buffer[i++]	= ((argb >> 5) & 0x3f) << 2;
 			buffer[i++]	= (argb & 0x1f) << 3;
-*/
+#else
+// For RGB 888 pixel format
+			buffer[i++]	= (argb >> 16) & 0xff;
+			buffer[i++]	= (argb >> 8) & 0xff;
+			buffer[i++]	= argb & 0xff;
+#endif
 		}
 	}
 	COM_WriteFile (pcxname, buffer, glwidth*glheight*3 + 18 );
 
 	free (buffer);
 	Con_Printf ("Wrote %s\n", pcxname);
-} 
+}

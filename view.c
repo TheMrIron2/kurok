@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -41,28 +41,28 @@ cvar_t	scr_ofsz = {"scr_ofsz","0", false};
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "3.0"};
 
-cvar_t	cl_bob = {"cl_bob","0.01", true};
-cvar_t	cl_bobcycle = {"cl_bobcycle","0.4", true};
+cvar_t	cl_bob = {"cl_bob","0.02", true};
+cvar_t	cl_bobcycle = {"cl_bobcycle","0.45", true};
 cvar_t	cl_bobup = {"cl_bobup","0.5", true};
 
-cvar_t	cl_bobside = {"cl_bobside","0.01", true};
-cvar_t	cl_bobsidecycle = {"cl_bobsidecycle","0.8", true};
+cvar_t	cl_bobside = {"cl_bobside","0.02", true};
+cvar_t	cl_bobsidecycle = {"cl_bobsidecycle","0.9", true};
 cvar_t	cl_bobsideup = {"cl_bobsideup","0.5", true};
 
 cvar_t	v_kicktime = {"v_kicktime", "0.5", false};
 cvar_t	v_kickroll = {"v_kickroll", "0.6", false};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.6", false};
 
-cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2.5", true};
-cvar_t	v_iroll_cycle = {"v_iroll_cycle", "2.5", true};
-cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "5", true};
-cvar_t	v_iyaw_level = {"v_iyaw_level", "1", true};
-cvar_t	v_iroll_level = {"v_iroll_level", "0.75", true};
-cvar_t	v_ipitch_level = {"v_ipitch_level", "1", true};
+cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "6", true};
+cvar_t	v_iroll_cycle = {"v_iroll_cycle", "6", true};
+cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "12", true};
+cvar_t	v_iyaw_level = {"v_iyaw_level", "0.15", true};
+cvar_t	v_iroll_level = {"v_iroll_level", "0.15", true};
+cvar_t	v_ipitch_level = {"v_ipitch_level", "0.15", true};
 
-cvar_t	v_idlescale = {"v_idlescale", "0.25", true};
+cvar_t	v_idlescale = {"v_idlescale", "0.1", true};
 
-cvar_t	crosshair = {"crosshair", "0", true};
+cvar_t	crosshair = {"crosshair", "2", true};
 cvar_t	cl_crossx = {"cl_crossx", "0", false};
 cvar_t	cl_crossy = {"cl_crossy", "0", false};
 
@@ -88,12 +88,12 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity)
 	float	sign;
 	float	side;
 	float	value;
-	
+
 	AngleVectors (angles, forward, right, up);
 	side = DotProduct (velocity, right);
 	sign = side < 0 ? -1 : 1;
 	side = fabsf(side);
-	
+
 	value = cl_rollangle.value;
 	if (cl.inwater)
 		value *= 2;
@@ -102,9 +102,9 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity)
 		side = side * value / cl_rollspeed.value;
 	else
 		side = value;
-	
+
 	return side*sign;
-	
+
 }
 
 
@@ -118,7 +118,7 @@ float V_CalcBob (void)
 {
 	float	bob;
 	float	cycle;
-	
+
 	cycle = cl.time - (int)(cl.time/cl_bobcycle.value)*cl_bobcycle.value;
 	cycle /= cl_bobcycle.value;
 	if (cycle < cl_bobup.value)
@@ -130,14 +130,14 @@ float V_CalcBob (void)
 // (don't count Z, or jumping messes it up)
 
 	bob = sqrtf(cl.velocity[0]*cl.velocity[0] + cl.velocity[1]*cl.velocity[1]) * cl_bob.value;
-//Con_Printf ("speed: %5.1f\n", Length(cl.velocity));
+//    Con_Printf ("speed: %5.1f\n", Length(cl.velocity));
 	bob = bob*0.3 + bob*0.7*sinf(cycle);
 	if (bob > 4)
 		bob = 4;
 	else if (bob < -7)
 		bob = -7;
 	return bob;
-	
+
 }
 
 /*
@@ -171,6 +171,20 @@ float V_CalcBobSide (void)
 	return bobside;
 
 }
+
+/*
+===============
+V_ZoomIN
+
+Kurok specific zoom code.
+===============
+*/
+/*
+float V_ZoomIN (void)
+{
+
+}
+*/
 
 //=============================================================================
 
@@ -212,7 +226,7 @@ If the user is adjusting pitch manually, either with lookup/lookdown,
 mlook and mouse, or klook and keyboard, pitch drifting is constantly stopped.
 
 Drifting is enabled when the center view key is hit, mlook is released and
-lookspring is non 0, or when 
+lookspring is non 0, or when
 ===============
 */
 void V_DriftPitch (void)
@@ -233,14 +247,14 @@ void V_DriftPitch (void)
 			cl.driftmove = 0;
 		else
 			cl.driftmove += host_frametime;
-	
+
 		if ( cl.driftmove > v_centermove.value)
 		{
 			V_StartPitchDrift ();
 		}
 		return;
 	}
-	
+
 	delta = cl.idealpitch - cl.viewangles[PITCH];
 
 	if (!delta)
@@ -251,7 +265,7 @@ void V_DriftPitch (void)
 
 	move = host_frametime * cl.pitchvel;
 	cl.pitchvel += host_frametime * v_centerspeed.value;
-	
+
 //Con_Printf ("move: %f (%f)\n", move, host_frametime);
 
 	if (delta > 0)
@@ -279,16 +293,17 @@ void V_DriftPitch (void)
 
 
 /*
-============================================================================== 
- 
-						PALETTE FLASHES 
- 
-============================================================================== 
-*/ 
- 
- 
+==============================================================================
+
+						PALETTE FLASHES
+
+==============================================================================
+*/
+
+
 cshift_t	cshift_empty = { {130,80,50}, 0 };
-cshift_t	cshift_water = { {64,64,128}, 128 };
+cshift_t	cshift_water = { {130,80,50}, 128 };
+cshift_t	cshift_kwater = { {64,64,128}, 128 }; // Blue water for Kurok
 cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
@@ -304,14 +319,14 @@ float		v_blend[4];		// rgba 0.0 - 1.0
 void BuildGammaTable (float g)
 {
 	int		i, inf;
-	
+
 	if (g == 1.0)
 	{
 		for (i=0 ; i<256 ; i++)
 			gammatable[i] = i;
 		return;
 	}
-	
+
 	for (i=0 ; i<256 ; i++)
 	{
 		inf = 255 * powf ( (i+0.5f)/255.5f , g ) + 0.5;
@@ -331,14 +346,14 @@ V_CheckGamma
 qboolean V_CheckGamma (void)
 {
 	static float oldgammavalue;
-	
+
 	if (v_gamma.value == oldgammavalue)
 		return false;
 	oldgammavalue = v_gamma.value;
-	
+
 	BuildGammaTable (v_gamma.value);
 	vid.recalc_refdef = 1;				// force a surface cache flush
-	
+
 	return true;
 }
 
@@ -358,7 +373,7 @@ void V_ParseDamage (void)
 	entity_t	*ent;
 	float	side;
 	float	count;
-	
+
 	armor = MSG_ReadByte ();
 	blood = MSG_ReadByte ();
 	for (i=0 ; i<3 ; i++)
@@ -376,38 +391,56 @@ void V_ParseDamage (void)
 	if (cl.cshifts[CSHIFT_DAMAGE].percent > 150)
 		cl.cshifts[CSHIFT_DAMAGE].percent = 150;
 
-	if (armor > blood)		
+	if (armor > blood)
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 200;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 100;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 100;
+	    if (kurok) // Flash blue for damage when wearing armor
+	    {
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 100;   //r
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 100;   //g
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 200;   //b
+	    }
+	    else
+	    {
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 200;   //r
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 100;   //g
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 100;   //b
+	    }
 	}
 	else if (armor)
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 220;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 50;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 50;
+	    if (kurok) // Flash blue for damage when wearing armor
+	    {
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 0;     //r
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 0;     //g
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 255;   //b
+	    }
+	    else
+	    {
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 220;   //r
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 50;    //g
+            cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 50;    //b
+	    }
 	}
 	else
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 255;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 0;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 0;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 255;   //r
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 0;     //g
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 0;     //b
 	}
 
 //
 // calculate view angle kicks
 //
 	ent = &cl_entities[cl.viewentity];
-	
+
 	VectorSubtract (from, ent->origin, from);
 	VectorNormalize (from);
-	
+
 	AngleVectors (ent->angles, forward, right, up);
 
 	side = DotProduct (from, right);
 	v_dmg_roll = count*side*v_kickroll.value;
-	
+
 	side = DotProduct (from, forward);
 	v_dmg_pitch = count*side*v_kickpitch.value;
 
@@ -466,7 +499,10 @@ void V_SetContentsColor (int contents)
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_slime;
 		break;
 	default:
-		cl.cshifts[CSHIFT_CONTENTS] = cshift_water;
+	if (kurok)
+		cl.cshifts[CSHIFT_CONTENTS] = cshift_kwater;
+    else
+        cl.cshifts[CSHIFT_CONTENTS] = cshift_water;
 	}
 }
 
@@ -525,7 +561,7 @@ void V_CalcBlend (void)
 	b = 0;
 	a = 0;
 
-	for (j=0 ; j<NUM_CSHIFTS ; j++)	
+	for (j=0 ; j<NUM_CSHIFTS ; j++)
 	{
 		if (!gl_cshiftpercent.value)
 			continue;
@@ -553,6 +589,7 @@ void V_CalcBlend (void)
 	if (v_blend[3] < 0)
 		v_blend[3] = 0;
 
+    Draw_FadeScreenColor (v_blend[0], v_blend[1], v_blend[2], v_blend[3]);
 }
 #endif
 
@@ -566,16 +603,16 @@ void V_UpdatePalette (void)
 {
 	int		i, j;
 	qboolean	new;
-	byte	*basepal, *newpal;
-	byte	pal[768];
-	float	r,g,b,a;
-	int		ir, ig, ib;
-	qboolean force;
+//	byte	*basepal, *newpal;
+//	byte	pal[768];
+//	float	r,g,b,a;
+//	int		ir, ig, ib;
+//	qboolean force;
 
 	V_CalcPowerupCshift ();
-	
+
 	new = false;
-	
+
 	for (i=0 ; i<NUM_CSHIFTS ; i++)
 	{
 		if (cl.cshifts[i].percent != cl.prev_cshifts[i].percent)
@@ -590,7 +627,7 @@ void V_UpdatePalette (void)
 				cl.prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
 			}
 	}
-	
+
 // drop the damage value
 	cl.cshifts[CSHIFT_DAMAGE].percent -= host_frametime*150;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
@@ -601,13 +638,13 @@ void V_UpdatePalette (void)
 	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
 
-	force = V_CheckGamma ();
-	if (!new && !force)
-		return;
+//	force = V_CheckGamma ();
+//	if (!new && !force)
+//		return;
 
 	V_CalcBlend ();
+/*
 
-//	a = 0;
 	a = v_blend[3];
 	r = 255*v_blend[0]*a;
 	g = 255*v_blend[1]*a;
@@ -633,21 +670,22 @@ void V_UpdatePalette (void)
 
 	basepal = host_basepal;
 	newpal = pal;
-	
+
 	for (i=0 ; i<256 ; i++)
 	{
 		ir = basepal[0];
 		ig = basepal[1];
 		ib = basepal[2];
 		basepal += 3;
-		
+
 		newpal[0] = ramps[0][ir];
 		newpal[1] = ramps[1][ig];
 		newpal[2] = ramps[2][ib];
 		newpal += 3;
 	}
 
-	VID_ShiftPalette (pal);	
+	VID_ShiftPalette (pal);
+	*/
 }
 #else	// !GLQUAKE
 void V_UpdatePalette (void)
@@ -660,9 +698,9 @@ void V_UpdatePalette (void)
 	qboolean force;
 
 	V_CalcPowerupCshift ();
-	
+
 	new = false;
-	
+
 	for (i=0 ; i<NUM_CSHIFTS ; i++)
 	{
 		if (cl.cshifts[i].percent != cl.prev_cshifts[i].percent)
@@ -677,7 +715,7 @@ void V_UpdatePalette (void)
 				cl.prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
 			}
 	}
-	
+
 // drop the damage value
 	cl.cshifts[CSHIFT_DAMAGE].percent -= host_frametime*150;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
@@ -691,42 +729,42 @@ void V_UpdatePalette (void)
 	force = V_CheckGamma ();
 	if (!new && !force)
 		return;
-			
+
 	basepal = host_basepal;
 	newpal = pal;
-	
+
 	for (i=0 ; i<256 ; i++)
 	{
 		r = basepal[0];
 		g = basepal[1];
 		b = basepal[2];
 		basepal += 3;
-	
-		for (j=0 ; j<NUM_CSHIFTS ; j++)	
+
+		for (j=0 ; j<NUM_CSHIFTS ; j++)
 		{
 			r += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[0]-r))>>8;
 			g += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[1]-g))>>8;
 			b += (cl.cshifts[j].percent*(cl.cshifts[j].destcolor[2]-b))>>8;
 		}
-		
+
 		newpal[0] = gammatable[r];
 		newpal[1] = gammatable[g];
 		newpal[2] = gammatable[b];
 		newpal += 3;
 	}
 
-	VID_ShiftPalette (pal);	
+	VID_ShiftPalette (pal);
 }
 #endif	// !GLQUAKE
 
 
-/* 
-============================================================================== 
- 
-						VIEW RENDERING 
- 
-============================================================================== 
-*/ 
+/*
+==============================================================================
+
+						VIEW RENDERING
+
+==============================================================================
+*/
 
 float angledelta (float a)
 {
@@ -742,7 +780,7 @@ CalcGunAngle
 ==================
 */
 void CalcGunAngle (void)
-{	
+{
 	float	yaw, pitch, move;
 	static float oldyaw = 0;
 	static float oldpitch = 0;
@@ -751,7 +789,6 @@ void CalcGunAngle (void)
     extern cvar_t	in_disable_analog;
     extern cvar_t	in_analog_strafe;
 
-    extern cvar_t   in_zoom_adjust;
     extern cvar_t   in_x_axis_adjust;
     extern cvar_t   in_y_axis_adjust;
 
@@ -779,7 +816,7 @@ void CalcGunAngle (void)
 		if (oldyaw - move > yaw)
 			yaw = oldyaw - move;
 	}
-	
+
 	if (pitch > oldpitch)
 	{
 		if (oldpitch + move < pitch)
@@ -844,7 +881,7 @@ V_BoundOffsets
 void V_BoundOffsets (void)
 {
 	entity_t	*ent;
-	
+
 	ent = &cl_entities[cl.viewentity];
 
 // absolutely bound refresh reletive to entity clipping hull
@@ -873,6 +910,7 @@ Idle swaying
 */
 void V_AddIdle (void)
 {
+    /*
     if (kurok)
     {
         double xyspeed;
@@ -891,10 +929,11 @@ void V_AddIdle (void)
     }
     else
     {
+    */
   	    r_refdef.viewangles[ROLL] += v_idlescale.value * sinf(cl.time*v_iroll_cycle.value) * v_iroll_level.value;
 	    r_refdef.viewangles[PITCH] += v_idlescale.value * sinf(cl.time*v_ipitch_cycle.value) * v_ipitch_level.value;
 	    r_refdef.viewangles[YAW] += v_idlescale.value * sinf(cl.time*v_iyaw_cycle.value) * v_iyaw_level.value;
-    }
+    //}
 }
 
 
@@ -908,7 +947,7 @@ Roll is induced by movement and damage
 void V_CalcViewRoll (void)
 {
 	float		side;
-		
+
 	side = V_CalcRoll (cl_entities[cl.viewentity].angles, cl.velocity);
 	r_refdef.viewangles[ROLL] += side;
 
@@ -979,7 +1018,7 @@ void V_CalcRefdef (void)
 	ent = &cl_entities[cl.viewentity];
 // view is the weapon model (only visible from inside body)
 	view = &cl.viewent;
-	
+
 
 // transform the view offset by the model's matrix to get the offset from
 // model origin for the view
@@ -987,10 +1026,17 @@ void V_CalcRefdef (void)
 										// the view dir
 	ent->angles[PITCH] = -cl.viewangles[PITCH];	// the model should face
 										// the view dir
-										
-	
-	bob = V_CalcBob ();
-	bobside = V_CalcBobSide ();
+	if (chase_active.value)
+	{
+        bob = 0;
+        bobside = 0;
+	}
+	else
+	{
+        bob = V_CalcBob ();
+        bobside = V_CalcBobSide ();
+	}
+
 // refresh position
 	VectorCopy (ent->origin, r_refdef.vieworg);
 	r_refdef.vieworg[2] += cl.viewheight + bob;
@@ -1003,8 +1049,12 @@ void V_CalcRefdef (void)
 	r_refdef.vieworg[2] += 1.0/32;
 
 	VectorCopy (cl.viewangles, r_refdef.viewangles);
-	V_CalcViewRoll ();
-	V_AddIdle ();
+
+	if (!chase_active.value)
+	{
+        V_CalcViewRoll ();
+        V_AddIdle ();
+	}
 
 // offsets
 	angles[PITCH] = -ent->angles[PITCH];	// because entity pitches are
@@ -1018,13 +1068,13 @@ void V_CalcRefdef (void)
 		r_refdef.vieworg[i] += scr_ofsx.value*forward[i]
 			+ scr_ofsy.value*right[i]
 			+ scr_ofsz.value*up[i];
-	
-	
+
+
 	V_BoundOffsets ();
-		
+
 // set up gun position
 	VectorCopy (cl.viewangles, view->angles);
-	
+
 	CalcGunAngle ();
 
 	VectorCopy (ent->origin, view->origin);
@@ -1072,7 +1122,7 @@ void V_CalcRefdef (void)
 if (cl.onground && ent->origin[2] - oldz > 0)
 {
 	float steptime;
-	
+
 	steptime = cl.time - cl.oldtime;
 	if (steptime < 0)
 //FIXME		I_Error ("steptime < 0");
@@ -1089,7 +1139,7 @@ if (cl.onground && ent->origin[2] - oldz > 0)
 else
 	oldz = ent->origin[2];
 
-	if (chase_active.value)
+    if (chase_active.value)
 		Chase_Update ();
 }
 
@@ -1121,7 +1171,7 @@ void V_RenderView (void)
 
 	if (cl.intermission)
 	{	// intermission / finale rendering
-		V_CalcIntermissionRefdef ();	
+		V_CalcIntermissionRefdef ();
 	}
 	else
 	{
@@ -1172,7 +1222,7 @@ void V_RenderView (void)
 	    Draw_Crosshair();
 //		Draw_Character (scr_vrect.x + scr_vrect.width/2 + cl_crossx.value, scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+');
 #endif
-		
+
 }
 
 //============================================================================
@@ -1184,7 +1234,7 @@ V_Init
 */
 void V_Init (void)
 {
-	Cmd_AddCommand ("v_cshift", V_cshift_f);	
+	Cmd_AddCommand ("v_cshift", V_cshift_f);
 	Cmd_AddCommand ("bf", V_BonusFlash_f);
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
 
@@ -1225,8 +1275,8 @@ void V_Init (void)
 
 	Cvar_RegisterVariable (&v_kicktime);
 	Cvar_RegisterVariable (&v_kickroll);
-	Cvar_RegisterVariable (&v_kickpitch);	
-	
+	Cvar_RegisterVariable (&v_kickpitch);
+
 	BuildGammaTable (1.0);	// no gamma yet
 	Cvar_RegisterVariable (&v_gamma);
 }

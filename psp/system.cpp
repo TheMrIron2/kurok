@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -46,6 +46,7 @@ extern "C"
 #include "fnmatch.h"
 
 void CDAudio_Stop(void);
+void CDAudio_Update(void);
 
 namespace quake
 {
@@ -78,7 +79,12 @@ namespace quake
 		void suspend()
 		{
 			Con_Printf("Suspend requested \n");
-			CDAudio_Pause();
+
+                Cvar_Set("bgmtype","none");
+                CDAudio_Update();
+                sceKernelDelayThread(5*10000);
+
+//			CDAudio_Pause();
 			// Close each file.
 			for (std::size_t file_index = 0; file_index < file_count; ++file_index)
 			{
@@ -94,7 +100,7 @@ namespace quake
 					file.handle = 0;
 				}
 			}
-			
+
 			Con_Printf("Filesystem sunspended\n");
 		}
 
@@ -123,10 +129,16 @@ namespace quake
 					}
 				}
 			}
-			
-			CDAudio_Resume();
+
+            Con_Printf("CD Audio Initialized\n");
+            if(kurok)
+            {
+                Cvar_Set("bgmtype","cd");
+                CDAudio_Update();
+            }
+//			CDAudio_Resume();
 			Con_Printf("Filesystem resumed\n");
-			
+
 		}
 	}
 }

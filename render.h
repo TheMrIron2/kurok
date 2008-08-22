@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -45,10 +45,10 @@ typedef struct entity_s
 	entity_state_t			baseline;		// to fill in defaults in updates
 
 	double					msgtime;		// time of last update
-	vec3_t					msg_origins[2];	// last two updates (0 is newest)	
+	vec3_t					msg_origins[2];	// last two updates (0 is newest)
 	vec3_t					origin;
 	vec3_t					msg_angles[2];	// last two updates (0 is newest)
-	vec3_t					angles;	
+	vec3_t					angles;
 	struct model_s			*model;			// NULL = no model
 	struct efrag_s			*efrag;			// linked list of efrags
 	int						frame;
@@ -58,36 +58,44 @@ typedef struct entity_s
 	int						skinnum;		// for Alias models
 	int						visframe;		// last frame this entity was
 											//  found in an active leaf
-											
+
 	int						dlightframe;	// dynamic lighting
 	int						dlightbits;
-	
+
 // FIXME: could turn these into a union
 	int						trivial_accept;
 	struct mnode_s			*topnode;		// for bmodels, first world node
 											//  that splits bmodel, or NULL if
 											//  not split
-   	 float                   frame_start_time;
-     float                   frame_interval;
-     int                     pose1; 
-     int                     pose2;
 
-     // fenix@io.com: model transform interpolation
-     float                   translate_start_time;
-     vec3_t                  origin1;
-     vec3_t                  origin2;
+    float                   frame_start_time;
+    float                   frame_interval;
+    int                     pose1;
+    int                     pose2;
 
-     float                   rotate_start_time;
-     vec3_t                  angles1;
-     vec3_t                  angles2;
+    // fenix@io.com: model transform interpolation
+    float                   translate_start_time;
+    vec3_t                  origin1;
+    vec3_t                  origin2;
 
-     // light lerping - pox@planetquake.com
+    float                   rotate_start_time;
+    vec3_t                  angles1;
+    vec3_t                  angles2;
 
-     float    last_shadelight;
+    // light lerping - pox@planetquake.com
 
-// Nehahra - Transparency
-	 float					transparency;
-     int                    transignore;
+    float    last_shadelight;
+
+    // Tomaz - QC Alpha Scale Glow Begin
+
+    float		alpha;
+    float		scale;
+    float		glow_size;
+    float		glow_red;
+    float		glow_green;
+    float		glow_blue;
+
+    // Tomaz - QC Alpha Scale Glow End
 
 } entity_t;
 
@@ -109,24 +117,24 @@ typedef struct
 										// right and bottom edges, for clamping
 	float		fvrectright;			// rightmost edge, for Alias clamping
 	float		fvrectbottom;			// bottommost edge, for Alias clamping
-	float		horizontalFieldOfView;	// at Z = 1.0, this many X is visible 
+	float		horizontalFieldOfView;	// at Z = 1.0, this many X is visible
 										// 2.0 = 90 degrees
 	float		xOrigin;			// should probably allways be 0.5
 	float		yOrigin;			// between be around 0.3 to 0.5
 
 	vec3_t		vieworg;
 	vec3_t		viewangles;
-	
+
 	float		fov_x, fov_y;
 
 	int			ambientlight;
-	
+
 	float fog_start;
 	float fog_end;
 	float fog_red;
 	float fog_green;
 	float fog_blue;
-	
+
 } refdef_t;
 
 

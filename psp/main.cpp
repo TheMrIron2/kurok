@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -30,11 +30,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <pspmoduleinfo.h>
 #include <psppower.h>
 #include <psprtc.h>
+#include <pspsdk.h>
 
 extern "C"
 {
 #include "../quakedef.h"
 #include "module.h"
+
+#ifdef SLIM_MODEL
+int pspDveMgrSetVideoOut(int, int, int, int, int, int, int);
+#endif
 }
 
 #include "battery.hpp"
@@ -47,7 +52,6 @@ extern	int  com_argc;
 extern	char **com_argv;
 
 void Sys_ReadCommandLineFile (char* netpath);
-
 
 namespace quake
 {
@@ -128,6 +132,7 @@ namespace quake
 			return thid;
 		}
 
+
 		static void disableFloatingPointExceptions()
 		{
 #ifndef _WIN32
@@ -148,6 +153,8 @@ namespace quake
 	}
 }
 
+extern bool bmg_type_changed;
+
 using namespace quake;
 using namespace quake::main;
 
@@ -159,11 +166,19 @@ int     f_argc;
 
 int main(int argc, char *argv[])
 {
-	// Catch exceptions from here.
-//	try
-//	{
-		// Set up the callback thread.
-		setUpCallbackThread();
+/*
+#ifdef SLIM_MODEL
+
+	SceUID mod = pspSdkLoadStartModule("dvemgr.prx", PSP_MEMORY_PARTITION_KERNEL);
+	if (mod < 0)
+		Sys_Error ("Couldn't load dvemgr.prx, error %08X", mod);
+
+//	vramExtender();
+	pspDveMgrSetVideoOut(0, 0x1d2, 720, 480, 1, 15, 0);
+#endif
+*/
+	// Set up the callback thread.
+	setUpCallbackThread();
 
 	// Disable floating point exceptions.
 	// If this isn't done, Quake crashes from (presumably) divide by zero
@@ -171,7 +186,6 @@ int main(int argc, char *argv[])
 	disableFloatingPointExceptions();
 
 	// Allocate the heap.
-
 	std::vector<unsigned char>	heap(heapSize, 0);
 
 	// Initialise the Common module.
@@ -179,18 +193,18 @@ int main(int argc, char *argv[])
 	// Get the current working dir.
 	char currentDirectory[1024];
 	char gameDirectory[1024];
-	
+
 	memset(gameDirectory, 0, sizeof(gameDirectory));
 	memset(currentDirectory, 0, sizeof(currentDirectory));
 	getcwd(currentDirectory, sizeof(currentDirectory) - 1);
-	
+
 	char   path_f[256];
 	strcpy(path_f,currentDirectory);
 	strcat(path_f,"/quake.cmdline");
 	Sys_ReadCommandLineFile(path_f);
-	
+
 	char *args[MAX_NUM_ARGVS];
-	
+
 	for (int k =0; k < f_argc; k++) {
 		int len = strlen(f_argv[k]);
 		args[k] = new char[len+1];
@@ -202,7 +216,7 @@ int main(int argc, char *argv[])
 		args[f_argc++] = "-condebug";
 		COM_InitArgv(f_argc, args);
 	}
-	else {	
+	else {
 		args[0] = "";
 		args[1] = "-condebug";
 		COM_InitArgv(2, args);
@@ -218,22 +232,22 @@ int main(int argc, char *argv[])
 
 #ifdef PSP_SOFTWARE_VIDEO
 	// Bump up the clock frequency.
-	if (tcpipAvailable)
-	    scePowerSetClockFrequency(300, 300, 150);
-    else
+//	if (tcpipAvailable)
+//	    scePowerSetClockFrequency(300, 300, 150); // Stop wifi problems
+//    else
 	    scePowerSetClockFrequency(333, 333, 166);
 #else
-	if (COM_CheckParm("-cpu333")) 
+	if (COM_CheckParm("-cpu333"))
 	{
-	    if (tcpipAvailable)
-	        scePowerSetClockFrequency(300, 300, 150);
-        else
+//	    if (tcpipAvailable)
+//	        scePowerSetClockFrequency(300, 300, 150); // Stop wifi problems
+//        else
 	        scePowerSetClockFrequency(333, 333, 166);
     }
 #endif
 
 	if (COM_CheckParm("-gamedir")) {
-		char* tempStr = com_argv[COM_CheckParm("-gamedir")+1]; 
+		char* tempStr = com_argv[COM_CheckParm("-gamedir")+1];
 		strncpy(gameDirectory, tempStr, sizeof(gameDirectory)-1);
 	}
 	else
@@ -262,15 +276,14 @@ int main(int argc, char *argv[])
 
 		// Enter the main loop.
 
-#ifdef PSP_MP3HARDWARE_MP3LIB	
+#ifdef PSP_MP3HARDWARE_MP3LIB
 		extern int changeMp3Volume;
 		extern void CDAudio_VolumeChange(float bgmvolume);
 #endif
-		
 		while (!quit)
 		{
-                          
-#ifdef PSP_MP3HARDWARE_MP3LIB		
+
+#ifdef PSP_MP3HARDWARE_MP3LIB
 			if(changeMp3Volume) CDAudio_VolumeChange(bgmvolume.value);
 #endif
 
@@ -279,6 +292,7 @@ int main(int argc, char *argv[])
 			{
 				// Suspend.
 				S_ClearBuffer();
+
 				quake::system::suspend();
 
 				// Wait for resume.
@@ -330,28 +344,28 @@ void Sys_ReadCommandLineFile (char* netpath)
 	int     remaining, count;
 	char    buf[4096];
 	int     argc = 1;
-	
+
 	remaining = Sys_FileOpenRead (netpath, &in);
-	
-	if (in > 0 && remaining > 0) {            
+
+	if (in > 0 && remaining > 0) {
 		count = Sys_FileRead (in, buf, 4096);
 		f_argv[0] = empty_string;
-	
+
 		char* lpCmdLine = buf;
-	
+
 		while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
 		{
 			while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
 				lpCmdLine++;
-	
+
 			if (*lpCmdLine)
 			{
 				f_argv[argc] = lpCmdLine;
 				argc++;
-	
+
 				while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
 					lpCmdLine++;
-	
+
 				if (*lpCmdLine)
 				{
 					*lpCmdLine = 0;
@@ -363,7 +377,7 @@ void Sys_ReadCommandLineFile (char* netpath)
 	} else {
 		f_argc = 0;
 	}
-	
+
 	if (in > 0)
 		Sys_FileClose (in);
 }

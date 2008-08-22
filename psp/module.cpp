@@ -23,6 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "module.h"
 
 // Set up the module info.
-PSP_MODULE_INFO("Kurok", 0, 1, 0);
+PSP_MODULE_INFO("Kurok", 0, 1, 1);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU);
 PSP_HEAP_SIZE_KB(PSP_HEAP_SIZE_MB * 1024);

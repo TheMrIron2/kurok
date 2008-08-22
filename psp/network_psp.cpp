@@ -610,7 +610,7 @@ namespace quake
 					return -1;
 				}
 
-				rc = sceNetAdhocctlConnect((int *)"quake");
+				rc = sceNetAdhocctlConnect((char *)"quake");
 				if(rc < 0) {
 					Con_Printf("Couldn't initialise the network %08X\n", rc);
 					pspSdkAdhocTerm();

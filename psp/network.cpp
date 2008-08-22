@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-//#include "network_adhoc.hpp"
-//#include "network_infrastructure.hpp"
 #include "network_psp.hpp"
 
 extern "C"
@@ -46,7 +44,8 @@ net_driver_t net_drivers[MAX_NET_DRIVERS] =
 			Loop_CanSendUnreliableMessage,
 			Loop_Close,
 			Loop_Shutdown
-	},
+	}
+	,
 	{
 		"Datagram",
 			qfalse,
