@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#define	GLTEST			// experimental stuff
 
 #define	QUAKE_GAME			// as opposed to utilities
+
+#define	KUR_VERSION			0.4
 
 #define	VERSION				1.09
 #define	GLQUAKE_VERSION		1.00
@@ -143,12 +145,11 @@ void	VID_UnlockBuffer (void);
 #define	IT_ROCKET_LAUNCHER		32
 #define	IT_LIGHTNING			64
 //#define IT_SUPER_LIGHTNING      128
-#define IT_UZI                  128
-#define IT_TEKBOW               8388608
 #define IT_SHELLS               256
 #define IT_NAILS                512
 #define IT_ROCKETS              1024
 #define IT_CELLS                2048
+
 #define IT_AXE                  4096
 #define IT_ARMOR1               8192
 #define IT_ARMOR2               16384
@@ -164,6 +165,29 @@ void	VID_UnlockBuffer (void);
 #define IT_SIGIL2               (1<<29)
 #define IT_SIGIL3               (1<<30)
 #define IT_SIGIL4               (1<<31)
+
+//===========================================
+//kurok changed and added defines
+
+#define KIT_SHELLS              128
+#define KIT_NAILS               256
+#define KIT_ROCKETS             512
+#define KIT_CELLS               1024
+#define KIT_AXE                 2048
+#define KIT_TEKBOW			    4096
+#define KIT_UZI					8192
+#define KIT_M99					16384
+#define KIT_EXTRAW1		        32768
+#define KIT_EXTRAW2		        65536
+#define KIT_ARMOR1              8388608
+#define KIT_ARMOR2              16777216
+#define KIT_ARMOR3              33554432
+#define KIT_50CAL		        67108864
+#define KIT_60CAL		        134217728
+#define KIT_EXTRA1			    268435456
+#define KIT_EXTRA2              536870912
+#define KIT_EXTRA3              1073741824
+#define KIT_SUPERHEALTH         2147483648
 
 //===========================================
 //rogue changed and added defines
@@ -306,6 +330,10 @@ extern	qboolean	host_initialized;		// true if into command execution
 extern	double		host_frametime;
 extern	byte		*host_basepal;
 extern	byte		*host_colormap;
+
+// sky palette
+extern	byte		*host_skybasepal;
+
 extern	int			host_framecount;	// incremented every frame, never reset
 extern	double		realtime;			// not bounded in any way, changed at
 										// start of every frame, never reset

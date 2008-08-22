@@ -48,6 +48,8 @@ qboolean	sb_showscores;
 
 int			sb_lines;			// scan lines to draw
 
+qpic_t		*ksb_ammo[1];
+
 qpic_t      *rsb_invbar[2];
 qpic_t      *rsb_weapons[5];
 qpic_t      *rsb_items[2];
@@ -246,6 +248,11 @@ void Sbar_Init (void)
 		rsb_ammo[0] = Draw_PicFromWad ("r_ammolava");
 		rsb_ammo[1] = Draw_PicFromWad ("r_ammomulti");
 		rsb_ammo[2] = Draw_PicFromWad ("r_ammoplasma");
+	}
+
+	if (kurok)
+	{
+		ksb_ammo[0] = Draw_PicFromWad ("sb_50cal");
 	}
 }
 
@@ -770,6 +777,7 @@ void Sbar_DrawInventory (void)
 
     if (!kurok)
     {
+
 // ammo counts
 	for (i=0 ; i<4 ; i++)
 	{
@@ -783,6 +791,7 @@ void Sbar_DrawInventory (void)
 	}
     }
 	flashon = 0;
+
    // items
    for (i=0 ; i<6 ; i++)
       if (cl.items & (1<<(17+i)))
@@ -797,12 +806,16 @@ void Sbar_DrawInventory (void)
          //MED 01/04/97 changed keys
             if (!hipnotic || (i>1))
             {
-               Sbar_DrawPic (192 + i*16, -16, sb_items[i]);
+				if(kurok)
+					Sbar_DrawPic (80 + i*16, 0, sb_items[i]);
+				else
+					Sbar_DrawPic (192 + i*16, -16, sb_items[i]);
             }
          }
          if (time && time > cl.time - 2)
             sb_updates = 0;
       }
+
    //MED 01/04/97 added hipnotic items
    // hipnotic items
    if (hipnotic)
@@ -847,6 +860,33 @@ void Sbar_DrawInventory (void)
 			}
 		}
 	}
+
+	if (kurok)
+	{
+/*
+	// new kurok items
+		for (i=0 ; i<2 ; i++)
+		{
+			if (cl.items & (1<<(29+i)))
+			{
+				time = cl.item_gettime[29+i];
+
+				if (time &&	time > cl.time - 2 && flashon )
+				{	// flash frame
+					sb_updates = 0;
+				}
+				else
+				{
+					Sbar_DrawPic (288 + i*16, -16, rsb_items[i]);
+				}
+
+				if (time &&	time > cl.time - 2)
+					sb_updates = 0;
+			}
+		}
+*/
+	}
+
 	else
 	{
 	// sigils
@@ -1061,7 +1101,7 @@ void Sbar_DrawFace (void)
 		anim = 0;
 
     if (kurok)
-	    Sbar_DrawPic (8, 0, sb_faces[2][0]);
+	    Sbar_DrawPic (8, 0, sb_faces[f][anim]);
 	else
 	    Sbar_DrawPic (112, 0, sb_faces[f][anim]);
 
@@ -1096,7 +1136,7 @@ void Sbar_Draw (void)
 
     if (kurok)
     {
-	    if (sb_lines > 0)
+	    if (scr_viewsize.value < 130)
 	    {
 		   Sbar_DrawInventory ();
                if (cl.maxclients != 1)
@@ -1108,7 +1148,7 @@ void Sbar_Draw (void)
                    }
                }
         }
-	    else if (sb_lines < 24)
+	    else// if (sb_lines < 24)
 	    {
                if (cl.maxclients != 1)
                {
@@ -1185,11 +1225,11 @@ void Sbar_Draw (void)
 			}
 			else if (kurok)
 			{
-				if (cl.items & IT_ARMOR3)
+				if (cl.items & KIT_ARMOR3)
 					Sbar_DrawPic (8, -16, sb_armor[2]);
-				else if (cl.items & IT_ARMOR2)
+				else if (cl.items & KIT_ARMOR2)
 					Sbar_DrawPic (8, -16, sb_armor[1]);
-				else if (cl.items & IT_ARMOR1)
+				else if (cl.items & KIT_ARMOR1)
 					Sbar_DrawPic (8, -16, sb_armor[0]);
 			}
 			else
@@ -1230,14 +1270,18 @@ void Sbar_Draw (void)
 		{
             if (!cl_gunpitch.value)
             {
-                if (cl.items & IT_SHELLS)
+                if (cl.items & KIT_SHELLS)
                     Sbar_DrawPic (402, 0, sb_ammo[0]);
-                else if (cl.items & IT_NAILS)
+                else if (cl.items & KIT_NAILS)
                     Sbar_DrawPic (402, 0, sb_ammo[1]);
-                else if (cl.items & IT_ROCKETS)
+                else if (cl.items & KIT_ROCKETS)
                     Sbar_DrawPic (402, 0, sb_ammo[2]);
-                else if (cl.items & IT_CELLS)
+                else if (cl.items & KIT_CELLS)
                     Sbar_DrawPic (402, 0, sb_ammo[3]);
+                else if (cl.items & KIT_50CAL)
+                    Sbar_DrawPic (402, -16, ksb_ammo[0]);
+//               else if (cl.items & KIT_60CAL)
+//                   Sbar_DrawPic (402, -16, ksb_ammo[1]);
             }
         }
 		else 
@@ -1283,20 +1327,23 @@ void Sbar_Draw (void)
             {
                 if (cl.stats[STAT_ACTIVEWEAPON] == IT_SHOTGUN)      // Pistol
                 {
-                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 1);
                     Sbar_DrawNum2 (418, 0, cl.stats[STAT_NAILS], 3, cl.stats[STAT_NAILS] <= 10);
                 }
                 else if (cl.stats[STAT_ACTIVEWEAPON] == IT_NAILGUN) // Assualt rifle
                 {
-                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 1);
                     Sbar_DrawNum2 (418, 0, cl.stats[STAT_NAILS], 3, cl.stats[STAT_NAILS] <= 10);
                 }
-                else if (cl.stats[STAT_ACTIVEWEAPON] == IT_UZI) // Uzi
+                else if (cl.stats[STAT_ACTIVEWEAPON] == KIT_UZI) // Uzi
                 {
-                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+                    Sbar_DrawNum (352, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 1);
                     Sbar_DrawNum2 (418, 0, cl.stats[STAT_NAILS], 3, cl.stats[STAT_NAILS] <= 10);
                 }
                 else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_SHOTGUN) // Shotgun
+                    Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+
+                else if (cl.stats[STAT_ACTIVEWEAPON] == KIT_M99) // Sniper
                     Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 
                 else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_NAILGUN) // Minigun
@@ -1316,7 +1363,7 @@ void Sbar_Draw (void)
 
                 }
                 else
-                    Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+                    Sbar_DrawNum2 (418, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] < 0);
             }
         }
         else

@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -26,12 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern "C"
 {
 #include "../quakedef.h"
+void VLight_ResetAnormTable();
 }
 
 void GL_InitTextureUsage ();
-
-
-
 
 /*
 ==================
@@ -47,13 +45,13 @@ void	R_InitTextures (void)
 
 // create a simple checkerboard texture for the default
 	r_notexture_mip = static_cast<texture_t*>(Hunk_AllocName (sizeof(texture_t) + 16*16+8*8+4*4+2*2, "notexture"));
-	
+
 	r_notexture_mip->width = r_notexture_mip->height = 16;
 	r_notexture_mip->offsets[0] = sizeof(texture_t);
 	r_notexture_mip->offsets[1] = r_notexture_mip->offsets[0] + 16*16;
 	r_notexture_mip->offsets[2] = r_notexture_mip->offsets[1] + 8*8;
 	r_notexture_mip->offsets[3] = r_notexture_mip->offsets[2] + 4*4;
-	
+
 	for (m=0 ; m<4 ; m++)
 	{
 		dest = (byte *)r_notexture_mip + r_notexture_mip->offsets[m];
@@ -65,7 +63,7 @@ void	R_InitTextures (void)
 				else
 					*dest++ = 0xff;
 			}
-	}	
+	}
 }
 /*
 byte	dottexture[8][8] =
@@ -128,7 +126,7 @@ void R_InitParticleTexture (void)
 	//
 	// particle texture
 	//
-	
+
 	for (x=0 ; x<16 ; x++)
 	{
 		for (y=0 ; y<16 ; y++)
@@ -167,39 +165,39 @@ void R_Envmap_f (void)
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env0.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env0.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 90;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env1.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env1.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 180;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env2.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env2.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[1] = 270;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env3.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env3.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = -90;
 	r_refdef.viewangles[1] = 0;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env4.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env4.rgb", buffer, sizeof(buffer));
 
 	r_refdef.viewangles[0] = 90;
 	r_refdef.viewangles[1] = 0;
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 	R_RenderView ();
 	/*glReadPixels (0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, buffer);*/
-	COM_WriteFile ("env5.rgb", buffer, sizeof(buffer));		
+	COM_WriteFile ("env5.rgb", buffer, sizeof(buffer));
 
 	envmap = qfalse;
 	/*glDrawBuffer  (GL_BACK);
@@ -213,15 +211,18 @@ R_Init
 ===============
 */
 void R_Init (void)
-{	
+{
 //	extern byte *hunk_base;
 	/*extern cvar_t gl_finish;*/
 
-	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
-	Cmd_AddCommand ("envmap", R_Envmap_f);	
-	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
-	Cmd_AddCommand ("fog", R_Fog_f);
-	
+	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
+	Cmd_AddCommand ("envmap", R_Envmap_f);
+	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
+
+//	Cmd_AddCommand ("fog", R_Fog_f);
+
+    Cvar_RegisterVariable (&r_showtris);
+    Cvar_RegisterVariable (&r_skyfog);
 	Cvar_RegisterVariable (&r_skyclip);
 	Cvar_RegisterVariable (&r_menufade);
 	Cvar_RegisterVariable (&r_norefresh);
@@ -251,6 +252,15 @@ void R_Init (void)
     Cvar_RegisterVariable (&r_model_brightness);
 
 	Cvar_RegisterVariable (&gl_keeptjunctions);
+
+	// RIOT - Vertex lighting
+
+    Cvar_RegisterVariable(&vlight);
+    Cvar_RegisterVariable(&vlight_pitch);
+    Cvar_RegisterVariable(&vlight_yaw);
+    Cvar_RegisterVariable(&vlight_highcut);
+    Cvar_RegisterVariable(&vlight_lowcut);
+
 /*
 	Cvar_RegisterVariable (&gl_finish);
 	Cvar_RegisterVariable (&gl_clear);
@@ -271,9 +281,14 @@ void R_Init (void)
 
 	Cvar_RegisterVariable (&gl_doubleeyes);
 */
+    if(vlight.value)
+        VLight_ResetAnormTable();
 
 	R_InitParticles ();
 	R_InitParticleTexture ();
+
+    Sky_Init (); //johnfitz
+	Fog_Init (); //johnfitz
 
 #ifdef GLTEST
 	Test_Init ();
@@ -322,7 +337,7 @@ void R_TranslatePlayerSkin (int playernum)
 			translate[TOP_RANGE+i] = top+i;
 		else
 			translate[TOP_RANGE+i] = top+15-i;
-				
+
 		if (bottom < 128)
 			translate[BOTTOM_RANGE+i] = bottom+i;
 		else
@@ -443,7 +458,7 @@ R_NewMap
 void R_NewMap (void)
 {
 	int		i;
-	
+
 	for (i=0 ; i<256 ; i++)
 		d_lightstylevalue[i] = 264;		// normal light value
 
@@ -454,15 +469,23 @@ void R_NewMap (void)
 // FIXME: is this one short?
 	for (i=0 ; i<cl.worldmodel->numleafs ; i++)
 		cl.worldmodel->leafs[i].efrags = NULL;
-		 	
+
 	r_viewleaf = NULL;
 	R_ClearParticles ();
 
 	GL_BuildLightmaps ();
 
+	Sky_NewMap (); //johnfitz -- skybox in worldspawn
+	Fog_NewMap (); //johnfitz -- global fog in worldspawn
+
+    // Reset these back to normal.
+    if(kurok)
+        Cbuf_AddText ("viewsize 120\n chase_active 0\n");
+
 	// identify sky texture
 	skytexturenum = -1;
 	mirrortexturenum = -1;
+
 	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
 	{
 		if (!cl.worldmodel->textures[i])
@@ -481,9 +504,6 @@ void R_NewMap (void)
 		}
  		cl.worldmodel->textures[i]->texturechain = NULL;
 	}
-#ifdef QUAKE2
-	R_LoadSkys ();
-#endif
 }
 
 
@@ -511,7 +531,7 @@ void R_TimeRefresh_f (void)
 
 	stop = Sys_FloatTime ();
 	time = stop-start;
-	if (time > 0) 
+	if (time > 0)
 		Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
 	GL_EndRendering ();

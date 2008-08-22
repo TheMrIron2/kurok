@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -47,7 +47,7 @@ namespace quake
 		};
 
 //		static int				file = -1;
-		static int		        last_track = 0;
+		static int		        last_track = 1;
 
 		static bool	 playing  = false;
 		static bool	 paused   = false;
@@ -120,7 +120,7 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "stop") == 0)
 	{
-		CDAudio_Stop();
+			CDAudio_Stop();
 		return;
 	}
 
@@ -155,29 +155,32 @@ void CDAudio_VolumeChange(float bgmvolume)
 	//pspAudioSetVolume(1, volume, volume);
 	mp3_volume = volume;
 	cdvolume = bgmvolume;
-	
+
 	changeMp3Volume=0;
-	
+
 //	Con_Printf("Volume changed to : %i\n", mp3_volume);
-	
+
 }
 
-extern "C" int sceKernelDelayThread(int delay); 
+extern "C" int sceKernelDelayThread(int delay);
 
 void CDAudio_Play(byte track, qboolean looping)
 {
 	last_track = track;
 	CDAudio_Stop();
 
+    if (track < 1)
+        track = 1;
+
 	char path[256];
 	sprintf(path, "%s\\MP3\\%02u.mp3", host_parms.basedir, track);
-	
+
 	int ret;
 	ret = mp3_start_play(path, 0);
 
 	if(ret != 2)
 	{
-		Con_Printf("Playing %s\n", path);
+//		Con_Printf("Playing %s\n", path);
 		playing = true;
 	}
 	else
@@ -186,7 +189,7 @@ void CDAudio_Play(byte track, qboolean looping)
 		playing = false;
 		CDAudio_VolumeChange(0);
 	}
-	
+
 
 	CDAudio_VolumeChange(bgmvolume.value);
 }
@@ -194,7 +197,7 @@ void CDAudio_Play(byte track, qboolean looping)
 void CDAudio_Stop(void)
 {
 	mp3_job_started = 0;
-		
+
 //	file = -1;
 	playing = false;
 	CDAudio_VolumeChange(0);
@@ -202,21 +205,19 @@ void CDAudio_Stop(void)
 
 void CDAudio_Pause(void)
 {
-	
 	CDAudio_VolumeChange(0);
 	paused = true;
 }
 
 void CDAudio_Resume(void)
 {
-	
 	CDAudio_VolumeChange(bgmvolume.value);
 	paused = false;
 }
 
 void CDAudio_Update(void)
 {
-	
+
 	//if (bgmvolume.value != mp3_volume)
 	//	CDAudio_VolumeChange(bgmvolume.value);
 	//if(changeMp3Volume) CDAudio_VolumeChange(bgmvolume.value);
@@ -228,7 +229,7 @@ void CDAudio_Update(void)
 		if (paused == true) {
 			CDAudio_Resume();
 		}
-	
+
 	} else {
 		if (paused == false) {
 			CDAudio_Pause();
@@ -241,14 +242,19 @@ void CDAudio_Update(void)
 
 int CDAudio_Init(void)
 {
-		
+	if (cls.state == ca_dedicated)
+		return -1;
+
+	if (COM_CheckParm("-nocdaudio"))
+		return -1;
+
 	mp3_init();
 	sceKernelDelayThread(5*10000);
-	
+
 	enabled = true;
-	
+
 	Cmd_AddCommand ("cd", CD_f);
-	
+
 	Con_Printf("CD Audio Initialized\n");
 
 	return 0;
@@ -257,7 +263,7 @@ int CDAudio_Init(void)
 void CDAudio_Shutdown(void)
 {
 	Con_Printf("CDAudio_Shutdown\n");
-	
+
 	CDAudio_Stop();
 
 	sceKernelDelayThread(5*10000);

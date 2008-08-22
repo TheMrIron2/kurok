@@ -10,6 +10,8 @@ MP3LIB          = MP3HARDWARE
 #MODEL_N=-DNORMAL_MODEL
 MODEL_S=-DSLIM_MODEL
 
+#PSP_FW_VERSION=390
+
 # If GPROF is used it builds an ELF, hence the EBOOT needs to be in GAME150
 #USE_GPROF		= 1
 
@@ -24,7 +26,7 @@ endif
 PSPLIBSDIR		= $(PSPSDK)/..
 
 # Project specific variables.
-VERSION		= 0.3 64MB
+VERSION		= 0.4 64MB
 SRC_DIR		= ..
 OBJ_DIR		= slim
 TARGET		= $(OBJ_DIR)/Quake
@@ -38,12 +40,14 @@ DIST_DIR		= dist
 DIST_FILES		= readme.html gpl.txt Quake/EBOOT.PBP
 ZIP_FILE		= Kurok_v$(VERSION).zip
 
-ifeq ($(USE_GPROF),1)
-GPROF_OBJS		= $(OBJ_DIR)/psp/prof.o $(OBJ_DIR)/psp/mcount.o
-GPROF_FLAGS		= -pg -DPROFILE
-else
-BUILD_PRX		= 1
-endif
+#ifeq ($(USE_GPROF),1)
+#GPROF_OBJS		= $(OBJ_DIR)/psp/prof.o $(OBJ_DIR)/psp/mcount.o
+#GPROF_FLAGS		= -pg -DPROFILE
+#else
+#BUILD_PRX		= 1
+#endif
+
+BUILD_PRX = 1
 
 # Object files used regardless of video back end.
 COMMON_OBJS = \
@@ -136,6 +140,7 @@ HARDWARE_VIDEO_ONLY_OBJS = \
 	$(OBJ_DIR)/psp/clipping.o \
 	$(OBJ_DIR)/psp/video_hardware.o \
 	$(OBJ_DIR)/psp/video_hardware_draw.o \
+	$(OBJ_DIR)/psp/video_hardware_fog.o \
 	$(OBJ_DIR)/psp/video_hardware_entity_fragment.o \
 	$(OBJ_DIR)/psp/video_hardware_light.o \
 	$(OBJ_DIR)/psp/video_hardware_main.o \
@@ -145,8 +150,9 @@ HARDWARE_VIDEO_ONLY_OBJS = \
 	$(OBJ_DIR)/psp/video_hardware_screen.o \
 	$(OBJ_DIR)/psp/video_hardware_surface.o \
 	$(OBJ_DIR)/psp/video_hardware_warp.o \
-	$(OBJ_DIR)/psp/pspDveManager.o \
-	$(OBJ_DIR)/psp/vram.o
+	$(OBJ_DIR)/psp/video_vertex_lighting.o \
+	$(OBJ_DIR)/psp/vram.o \
+	$(OBJ_DIR)/psp/pspDveManager.o
 HARDWARE_VIDEO_ONLY_FLAGS = -DPSP_HARDWARE_VIDEO
 
 # Object files used only under hardware mp3.
@@ -178,7 +184,7 @@ ASFLAGS = $(CFLAGS) -c
 
 # Libs.
 GU_LIBS 	= -lpspgum_vfpu -lpspvfpu -lpspgu
-AUDIO_LIBS	= -lpspaudiolib -lpspaudio m33libs/libpspaudiocodec.a m33libs/libpspkubridge.a
+AUDIO_LIBS	= -lpspaudiolib -lpspaudio -lpspaudiocodec m33libs/lib/libpspkubridge.a
 #madlibs/libmad.a
 MISC_LIBS	= -lpsprtc -lpsppower
 STD_LIBS	= -lstdc++ -lm -lc

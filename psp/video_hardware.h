@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -26,6 +26,8 @@ void GL_EndRendering (void);
 
 void GL_Upload8(int texture_index, const byte *data, int width, int height);
 void GL_Upload16(int texture_index, const byte *data, int width, int height);
+void GL_Upload24(int texture_index, const byte *data, int width, int height);
+void GL_Upload32(int texture_index, const byte *data, int width, int height);
 int  GL_LoadTexture(const char *identifier, int width, int height, const byte *data, qboolean stretch_to_power_of_two, int filter, int mipmap_level);
 int  GL_LoadTextureLM (const char *identifier, int width, int height, const byte *data,int bpp, int filter, qboolean update);
 void GL_UnloadTexture (const int texture_index);
@@ -46,7 +48,6 @@ extern	int glx, gly, glwidth, glheight;
 #define SKYMASK			(SKYSIZE - 1)
 
 #define BACKFACE_EPSILON	0.01
-
 
 void R_TimeRefresh_f (void);
 void R_ReadPointFile_f (void);
@@ -99,6 +100,17 @@ typedef struct particle_s
 	ptype_t		type;
 } particle_t;
 
+typedef struct cachepic_s
+{
+	char		name[MAX_QPATH];
+	qpic_t		pic;
+	byte		padding[32];	// for appended glpic
+} cachepic_t;
+
+typedef struct
+{
+	int			index;	// index into gltextures[].
+} glpic_t;
 
 //====================================================
 
@@ -128,6 +140,9 @@ extern	refdef_t	r_refdef;
 extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
 extern	texture_t	*r_notexture_mip;
 extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
+
+extern  int	    skyimage[6]; // Where sky images are stored
+extern  int 	lightmap_index[64]; // Where lightmaps are stored
 
 extern	qboolean	envmap;
 extern	int	currenttexture;
@@ -167,7 +182,15 @@ extern	cvar_t	r_mipmaps_func;
 extern	cvar_t	r_mipmaps_bias;
 extern  cvar_t	r_skyclip;
 extern  cvar_t  r_menufade;
+extern  cvar_t  r_skyfog;
+extern  cvar_t	r_showtris;
 extern  cvar_t	r_test;
+
+extern  cvar_t  vlight;   // RIOT - Vertex lighting
+extern  cvar_t	vlight_pitch;
+extern  cvar_t	vlight_yaw;
+extern  cvar_t	vlight_lowcut;
+extern  cvar_t	vlight_highcut;
 
 extern	int			mirrortexturenum;	// quake texturenum, not gltexturenum
 extern	qboolean	mirror;
@@ -191,10 +214,27 @@ void R_RenderBrushPoly (msurface_t *fa);
 void R_InitParticles (void);
 void R_ClearParticles (void);
 void R_Fog_f (void);
+
+void Sky_LoadSkyBox (char *name);
+void Sky_NewMap (void);
+void Sky_Init (void);
+
+void R_DrawSkyBox (void);
+void R_ClearSkyBox (void);
+
+void Fog_ParseServerMessage (void);
+void Fog_SetupFrame (void);
+void Fog_EnableGFog (void);
+void Fog_DisableGFog (void);
+void Fog_NewMap (void);
+void Fog_Init (void);
+
 void GL_BuildLightmaps (void);
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 void GL_Set2D (void);
 void GL_SubdivideSurface (msurface_t *fa);
+void GL_Surface (msurface_t *fa);
+
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa);
 void EmitReflectivePolys (msurface_t *fa);
@@ -202,14 +242,9 @@ void EmitBothSkyLayers (msurface_t *fa);
 void R_DrawSkyChain (msurface_t *s);
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
-/*
-float R_GetVertexLightValue (int index, float apitch, float ayaw);
-float R_LerpVertexLight (int index1, int index2, float ilerp, float apitch, float ayaw);
-void R_InitVertexLights (void);
+
 //extern	float	bubblecolor[NUM_DLIGHTTYPES][4];
-extern	float	vlight_pitch, vlight_yaw;
-extern	vec3_t	lightspot, lightcolor;
-*/
+
 void R_RotateForEntity (entity_t *e);
 void R_StoreEfrags (efrag_t **ppefrag);
 void D_StartParticles (void);

@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -54,7 +54,7 @@ typedef struct
 	int		original_width;
 	int		original_height;
 	bool	stretch_to_power_of_two;
-	
+
 	// Texture description.
 	int		format;
 	int		filter;
@@ -66,11 +66,6 @@ typedef struct
 	texel*	ram;
 	texel*	vram;
 } gltexture_t;
-
-typedef struct
-{
-	int			index;	// index into gltextures[].
-} glpic_t;
 
 byte		conback_buffer[sizeof(qpic_t) + sizeof(glpic_t)];
 qpic_t		*conback = (qpic_t *)&conback_buffer;
@@ -118,12 +113,12 @@ void GL_Bind (int texture_index)
 	// Set the texture image.
 	const void* const texture_memory = texture.vram ? texture.vram : texture.ram;
 	sceGuTexImage(0, texture.width, texture.height, texture.width, texture_memory);
-	
+
 	if (texture.mipmaps > 0 && r_mipmaps.value > 0) {
 		int size = (texture.width * texture.height);
 		int offset = size;
 		int div = 2;
-		
+
 		for (int i = 1; i <= texture.mipmaps; i++) {
 			void* const texture_memory2 = ((byte*) texture_memory)+offset;
 			sceGuTexImage(i, texture.width/div, texture.height/div, texture.width/div, texture_memory2);
@@ -160,13 +155,6 @@ void GL_BindLM (int texture_index)
 
 //=============================================================================
 /* Support Routines */
-
-typedef struct cachepic_s
-{
-	char		name[MAX_QPATH];
-	qpic_t		pic;
-	byte		padding[32];	// for appended glpic
-} cachepic_t;
 
 #define	MAX_CACHED_PICS		128
 cachepic_t	menu_cachepics[MAX_CACHED_PICS];
@@ -216,7 +204,7 @@ qpic_t	*Draw_CachePic (char *path)
 //
 // load the pic from disk
 //
-	dat = (qpic_t *)COM_LoadTempFile (path);	
+	dat = (qpic_t *)COM_LoadTempFile (path);
 	if (!dat)
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
 	SwapPic (dat);
@@ -296,15 +284,15 @@ void Draw_Init (void)
 		Sys_Error ("Couldn't load gfx/conback.lmp");
 	SwapPic (cb);
 
-	if (!kurok)
-    {
-	    // hack the version number directly into the pic
-	    sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
-	    dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
-	    y = strlen(ver);
-	    for (x=0 ; x<y ; x++)
-		    Draw_CharToConback (ver[x], dest+(x<<3));
-    }
+	// hack the version number directly into the pic
+	if(!kurok)
+	{
+	   	sprintf (ver, "(gl %4.2f) %4.2f", (float)GLQUAKE_VERSION, (float)VERSION);
+	   	dest = cb->data + 320*186 + 320 - 11 - 8*strlen(ver);
+		y = strlen(ver);
+		for (x=0 ; x<y ; x++)
+			Draw_CharToConback (ver[x], dest+(x<<3));
+	}
 
 	conback->width = cb->width;
 	conback->height = cb->height;
@@ -354,7 +342,7 @@ void Draw_Character (int x, int y, int num)
 		return;		// space
 
 	num &= 255;
-	
+
 	if (y <= -8)
 		return;			// totally off screen
 
@@ -436,26 +424,23 @@ static void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 
 	for (start = 0, end = glt.original_width; start < end; start += slice, x += slice)
 	{
+        vertex* const vertices = static_cast<vertex*>(sceGuGetMemory(sizeof(vertex) * 2));
+        int width = (start + slice) < end ? slice : end-start;
 
-	vertex* const vertices = static_cast<vertex*>(sceGuGetMemory(sizeof(vertex) * 2));
+        vertices[0].u		= start;
+        vertices[0].v		= 0;
+        vertices[0].x		= x;
+        vertices[0].y		= y;
+        vertices[0].z		= 0;
 
-	int width = (start + slice) < end ? slice : end-start;
+        vertices[1].u		= start + width;//glt.original_width;
+        vertices[1].v		= glt.original_height;
+        vertices[1].x		= x + width;//pic->width;
+        vertices[1].y		= y + pic->height;
+        vertices[1].z		= 0;
 
-	vertices[0].u		= start;
-	vertices[0].v		= 0;
-	vertices[0].x		= x;
-	vertices[0].y		= y;
-	vertices[0].z		= 0;
-
-	vertices[1].u		= start + width;//glt.original_width;
-	vertices[1].v		= glt.original_height;
-	vertices[1].x		= x + width;//pic->width;
-	vertices[1].y		= y + pic->height;
-	vertices[1].z		= 0;
-
-	sceGuColor(GU_RGBA(0xff, 0xff, 0xff, static_cast<unsigned int>(alpha * 255.0f)));
-	sceGuDrawArray(GU_SPRITES,GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
-
+        sceGuColor(GU_RGBA(0xff, 0xff, 0xff, static_cast<unsigned int>(alpha * 255.0f)));
+        sceGuDrawArray(GU_SPRITES,GU_TEXTURE_16BIT | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
 	}
 	if (alpha != 1.0f)
 		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
@@ -463,8 +448,6 @@ static void Draw_AlphaPic (int x, int y, qpic_t *pic, float alpha)
 
 void Draw_Crosshair(void)
 {
-
-//	extern vrect_t scr_vrect;
     extern cvar_t crosshair;
     extern cvar_t cl_crossx;
     extern cvar_t cl_crossy;
@@ -487,34 +470,43 @@ void Draw_Crosshair(void)
 		SceCtrlData pad;
 		sceCtrlPeekBufferPositive(&pad, 1);
 
-		if (crosshair.value > 2)
+		if (crosshair.value >= 2)
 	    {
-			if (crosshair.value == 3)
+            if (cl.stats[STAT_ACTIVEWEAPON] == KIT_AXE)                  // Knife
 				pic = Draw_CachePic ("gfx/ch_axe.lmp");
 
-	        else if (crosshair.value == 4)
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == KIT_TEKBOW)          // Tekbow
 				pic = Draw_CachePic ("gfx/ch_tekbo.lmp");
 
-	        else if (crosshair.value == 5)
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SHOTGUN)         // Pistol
 				pic = Draw_CachePic ("gfx/ch_sgun.lmp");
 
-	        else if (crosshair.value == 6)
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_SHOTGUN)   // Shotgun
 				pic = Draw_CachePic ("gfx/ch_ssgun.lmp");
 
-	        else if (crosshair.value == 7)
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == IT_NAILGUN)         // Assualt rifle
 				pic = Draw_CachePic ("gfx/ch_ngun.lmp");
 
-	        else if (crosshair.value == 8)
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == KIT_UZI)          // Uzi
+				pic = Draw_CachePic ("gfx/ch_uzi.lmp");
+
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == KIT_M99)          // Sniper rifle
+				pic = Draw_CachePic ("gfx/ch_snip.lmp");
+
+	        else if (cl.stats[STAT_ACTIVEWEAPON] == IT_SUPER_NAILGUN)   // Minigun
 				pic = Draw_CachePic ("gfx/ch_sngun.lmp");
 
-			else if (crosshair.value == 9)
+			else if (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // Grenade launcher
 				pic = Draw_CachePic ("gfx/ch_gl.lmp");
 
-			else if (crosshair.value == 10)
+			else if (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER) // Rocket launcher
 				pic = Draw_CachePic ("gfx/ch_rl.lmp");
 
-			else if (crosshair.value == 11)
+			else if (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)       // Remote Mines
 				pic = Draw_CachePic ("gfx/ch_light.lmp");
+
+	        else
+				pic = Draw_CachePic ("gfx/ch_sgun.lmp");
 
 			double crosshair_x = (vid.width - pic->width)/2 + cl_crossx.value + ((pad.Lx - 128) * in_x_axis_adjust.value * 0.05 );
 			double crosshair_y = (vid.height - pic->height)/2 + cl_crossy.value + ((pad.Ly - 128) * in_y_axis_adjust.value * 0.05 );
@@ -554,9 +546,9 @@ void Draw_Crosshair(void)
 	{
 		if (crosshair.value == 1)
 //         Draw_Character (scr_vrect.x + scr_vrect.width/2 - 2, scr_vrect.y + scr_vrect.height/2 - 4, '+');
-			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
-		else if (crosshair.value == 2)
 			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '+');
+		else if (crosshair.value == 2)
+			Draw_Character ((vid.width - 8)/2, (vid.height - 8)/2, '.');
 	}
 }
 
@@ -583,7 +575,7 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
 	{
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	}
-		
+
 	Draw_Pic (x, y, pic);
 }
 
@@ -773,7 +765,6 @@ void Draw_FadeScreen (void)
 	vertices[1].z		= 0;
 
 	sceGuDisable(GU_TEXTURE_2D);
-	sceGuDisable(GU_ALPHA_TEST);
 
 	sceGuColor(GU_RGBA(0, 0, 0, 0x40));
 	sceGuDrawArray(
@@ -781,7 +772,6 @@ void Draw_FadeScreen (void)
 		GU_VERTEX_16BIT | GU_TRANSFORM_2D,
 		2, 0, vertices);
 
-	sceGuEnable(GU_ALPHA_TEST);
 	sceGuEnable(GU_TEXTURE_2D);
 
 	Sbar_Changed();
@@ -797,9 +787,55 @@ void Draw_FadeScreen2 (void)
 {
     extern cvar_t r_menufade;
 
-	sceGuDisable(GU_ALPHA_TEST);
 	Draw_AlphaPic (0, 0, conback, r_menufade.value);
-	sceGuEnable(GU_ALPHA_TEST);
+}
+
+//=============================================================================
+
+/*
+================
+Draw_FadeScreen
+
+================
+*/
+void Draw_FadeScreenColor (float r, float g, float b, float a)
+{
+	struct vertex
+	{
+		short	x, y, z;
+	};
+
+	vertex* const vertices = static_cast<vertex*>(sceGuGetMemory(sizeof(vertex) * 2));
+
+	vertices[0].x		= 0;
+	vertices[0].y		= 0;
+	vertices[0].z		= 0;
+	vertices[1].x		= vid.width;
+	vertices[1].y		= vid.height;
+	vertices[1].z		= 0;
+
+	sceGuDisable(GU_TEXTURE_2D);
+
+    if (r > 1)
+        r = 1;
+    if (g > 1)
+        g = 1;
+    if (b > 1)
+        b = 1;
+    if (a > 1)
+        a = 1;
+
+	sceGuColor(GU_COLOR(r, g, b, a * 1.0f));
+	sceGuDrawArray(
+		GU_SPRITES,
+		GU_VERTEX_16BIT | GU_TRANSFORM_2D,
+		2, 0, vertices);
+
+    sceGuColor(0xffffffff);
+
+	sceGuEnable(GU_TEXTURE_2D);
+
+	Sbar_Changed();
 }
 
 //=============================================================================
@@ -917,7 +953,7 @@ void GL_Upload8(int texture_index, const byte *data, int width, int height)
 	// Create a temporary buffer to use as a source for swizzling.
 	std::size_t buffer_size = texture.width * texture.height;
 	std::vector<byte> unswizzled(buffer_size);
-	
+
 	if (texture.mipmaps > 0) {
 		int size_incr = buffer_size/4;
 		for (int i= 1;i <= texture.mipmaps;i++) {
@@ -925,7 +961,7 @@ void GL_Upload8(int texture_index, const byte *data, int width, int height)
 			size_incr = size_incr/4;
 		}
 	}
-	
+
 	// Do we need to resize?
 	if (texture.stretch_to_power_of_two)
 	{
@@ -945,7 +981,7 @@ void GL_Upload8(int texture_index, const byte *data, int width, int height)
 
 	// Swizzle to system RAM.
 	swizzle_fast(texture.ram, &unswizzled[0], texture.width, texture.height);
-	
+
 	if (texture.mipmaps > 0) {
 		int size = (texture.width * texture.height);
 		int offset = size;
@@ -958,7 +994,7 @@ void GL_Upload8(int texture_index, const byte *data, int width, int height)
 			div *=2;
 		}
 	}
-	
+
 	unswizzled.clear();
 
 	// Copy to VRAM?
@@ -993,8 +1029,7 @@ void GL_Upload8_A(int texture_index, const byte *data, int width, int height)
 	// Create a temporary buffer to use as a source for swizzling.
 	const std::size_t buffer_size = texture.width * texture.height;
 	memcpy((void *) texture.ram, (void *) data, buffer_size);
-	
-	
+
 	// Copy to VRAM?
 	if (texture.vram)
 	{
@@ -1027,8 +1062,8 @@ void GL_Upload16(int texture_index, const byte *data, int width, int height)
 	// Create a temporary buffer to use as a source for swizzling.
 	const std::size_t buffer_size = texture.width * texture.height * 2;
 	memcpy((void *) texture.ram, (void *) data, buffer_size);
-	
-	
+
+
 	// Copy to VRAM?
 	if (texture.vram)
 	{
@@ -1043,6 +1078,72 @@ void GL_Upload16(int texture_index, const byte *data, int width, int height)
 	sceKernelDcacheWritebackRange(texture.ram, buffer_size);
 }
 
+void GL_Upload24(int texture_index, const byte *data, int width, int height)
+{
+	if ((texture_index < 0) || (texture_index >= MAX_GLTEXTURES) || gltextures_used[texture_index] == false)
+	{
+		Sys_Error("Invalid texture index %d", texture_index);
+	}
+
+	const gltexture_t& texture = gltextures[texture_index];
+
+	// Check that the texture matches.
+	if ((width != texture.original_width) != (height != texture.original_height))
+	{
+		Sys_Error("Attempting to upload a texture which doesn't match the destination");
+	}
+
+	// Create a temporary buffer to use as a source for swizzling.
+	const std::size_t buffer_size = texture.width * texture.height * 3;
+	memcpy((void *) texture.ram, (void *) data, buffer_size);
+
+
+	// Copy to VRAM?
+	if (texture.vram)
+	{
+		// Copy.
+		memcpy(texture.vram, texture.ram, buffer_size);
+
+		// Flush the data cache.
+		sceKernelDcacheWritebackRange(texture.vram, buffer_size);
+	}
+
+	// Flush the data cache.
+	sceKernelDcacheWritebackRange(texture.ram, buffer_size);
+}
+
+void GL_Upload32(int texture_index, const byte *data, int width, int height)
+{
+	if ((texture_index < 0) || (texture_index >= MAX_GLTEXTURES) || gltextures_used[texture_index] == false)
+	{
+		Sys_Error("Invalid texture index %d", texture_index);
+	}
+
+	const gltexture_t& texture = gltextures[texture_index];
+
+	// Check that the texture matches.
+	if ((width != texture.original_width) != (height != texture.original_height))
+	{
+		Sys_Error("Attempting to upload a texture which doesn't match the destination");
+	}
+
+	// Create a temporary buffer to use as a source for swizzling.
+	const std::size_t buffer_size = texture.width * texture.height * 4;
+	memcpy((void *) texture.ram, (void *) data, buffer_size);
+
+	// Copy to VRAM?
+	if (texture.vram)
+	{
+		// Copy.
+		memcpy(texture.vram, texture.ram, buffer_size);
+
+		// Flush the data cache.
+		sceKernelDcacheWritebackRange(texture.vram, buffer_size);
+	}
+
+	// Flush the data cache.
+	sceKernelDcacheWritebackRange(texture.ram, buffer_size);
+}
 
 static std::size_t round_up(std::size_t size)
 {
@@ -1062,17 +1163,17 @@ static std::size_t round_down(std::size_t size)
 }
 
 void GL_UnloadTexture(int texture_index) {
-	if (gltextures_used[texture_index] == true) 
+	if (gltextures_used[texture_index] == true)
 	{
 		gltexture_t& texture = gltextures[texture_index];
-		
+
 		Con_DPrintf("Unloading: %s\n",texture.identifier);
 		// Source.
 		strcpy(texture.identifier,"");
 		texture.original_width = 0;
 		texture.original_height = 0;
 		texture.stretch_to_power_of_two = qfalse;
-		
+
 		// Texture description.
 		texture.format = GU_PSM_T8;
 		texture.filter = GU_LINEAR;
@@ -1085,14 +1186,13 @@ void GL_UnloadTexture(int texture_index) {
 			free(texture.ram);
 			texture.ram = NULL;
 		}
-		if (texture.vram != NULL) 
+		if (texture.vram != NULL)
 		{
 			quake::vram::free(texture.vram);
 			texture.vram = NULL;
-		}		
-		
+		}
 	}
-	
+
 	gltextures_used[texture_index] = false;
 	numgltextures--;
 }
@@ -1100,21 +1200,21 @@ void GL_UnloadTexture(int texture_index) {
 int GL_LoadTexture (const char *identifier, int width, int height, const byte *data, qboolean stretch_to_power_of_two, int filter, int mipmap_level)
 {
 	int texture_index = -1;
-	
+
 	tex_scale_down = r_tex_scale_down.value == qtrue;
 	// See if the texture is already present.
 	if (identifier[0])
 	{
 		for (int i = 0; i < MAX_GLTEXTURES; ++i)
 		{
-			if (gltextures_used[i] == true) 
+			if (gltextures_used[i] == true)
 			{
 				const gltexture_t& texture = gltextures[i];
 				if (!strcmp (identifier, texture.identifier))
 				{
 					return i;
 				}
-			}	
+			}
 		}
 	}
 
@@ -1127,14 +1227,14 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 	// Use the next available texture.
 	numgltextures++;
 	texture_index = numgltextures;
-		
+
 	for (int i = 0; i < MAX_GLTEXTURES; ++i)
 	{
 		if (gltextures_used[i] == false) {
 			texture_index = i;
 			break;
 		}
-	}	
+	}
 	gltexture_t& texture = gltextures[texture_index];
 	gltextures_used[texture_index] = true;
 
@@ -1148,7 +1248,7 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 	texture.format			= GU_PSM_T8;
 	texture.filter			= filter;
 	texture.mipmaps			= mipmap_level;
-	
+
 	if (tex_scale_down == true && texture.stretch_to_power_of_two == true) {
 		texture.width			= std::max(round_down(width), 32U);
 		texture.height			= std::max(round_down(height),32U);
@@ -1156,14 +1256,14 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 		texture.width			= std::max(round_up(width), 32U);
 		texture.height			= std::max(round_up(height),32U);
 	}
-	
+
 	for (int i=0; i <= mipmap_level;i++) {
 		int div = (int) powf(2,i);
 		if ((texture.width / div) > 16 && (texture.height / div) > 16 ) {
 			texture.mipmaps = i;
 		}
 	}
-	
+
 	// Do we really need to resize the texture?
 	if (texture.stretch_to_power_of_two)
 	{
@@ -1172,10 +1272,10 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 	}
 
 	Con_DPrintf("Loading: %s [%dx%d](%0.2f KB)\n",texture.identifier,texture.width,texture.height, (float) (texture.width*texture.height)/1024);
-	
+
 	// Allocate the RAM.
 	std::size_t buffer_size = texture.width * texture.height;
-	
+
 	if (texture.mipmaps > 0) {
 		int size_incr = buffer_size/4;
 		for (int i= 1;i <= texture.mipmaps;i++) {
@@ -1183,9 +1283,9 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 			size_incr = size_incr/4;
 		}
 	}
-		
+
 	texture.ram	= static_cast<texel*>(memalign(16, buffer_size));
-	
+
 	if (!texture.ram)
 	{
 		Sys_Error("Out of RAM for textures.");
@@ -1196,7 +1296,7 @@ int GL_LoadTexture (const char *identifier, int width, int height, const byte *d
 
 	// Upload the texture.
 	GL_Upload8(texture_index, data, width, height);
-	
+
 	if (texture.vram && texture.ram) {
 		free(texture.ram);
 		texture.ram = NULL;
@@ -1214,14 +1314,14 @@ int GL_LoadTextureLM (const char *identifier, int width, int height, const byte 
 	{
 		for (int i = 0; i < MAX_GLTEXTURES; ++i)
 		{
-			if (gltextures_used[i] == true) 
+			if (gltextures_used[i] == true)
 			{
 				const gltexture_t& texture = gltextures[i];
 				if (!strcmp (identifier, texture.identifier))
 				{
 					if (update == qfalse) {
 						return i;
-					} 
+					}
 					else {
 						texture_index = i;
 						break;
@@ -1237,38 +1337,40 @@ int GL_LoadTextureLM (const char *identifier, int width, int height, const byte 
 		{
 			Sys_Error("Out of OpenGL textures");
 		}
-	
+
 		// Use the next available texture.
 		numgltextures++;
 		texture_index = numgltextures;
-		
+
 		for (int i = 0; i < MAX_GLTEXTURES; ++i)
 		{
 			if (gltextures_used[i] == false) {
 				texture_index = i;
 				break;
 			}
-		}	
+		}
 		gltexture_t& texture = gltextures[texture_index];
 		gltextures_used[texture_index] = true;
-	
+
 		// Fill in the source data.
 		strcpy(texture.identifier, identifier);
 		texture.original_width			= width;
 		texture.original_height			= height;
 		texture.stretch_to_power_of_two	= false;
-	
+
 		// Fill in the texture description.
 		if (bpp == 1)
 			texture.format		= GU_PSM_T8;
 		else if (bpp == 2)
 			texture.format		= GU_PSM_4444;
+		else if (bpp == 3)
+			texture.format		= GU_PSM_8888;
 		else if (bpp == 4)
-			texture.format		= GU_PSM_4444;
+			texture.format		= GU_PSM_8888;
 
 		texture.filter			= filter;
 		texture.mipmaps			= 0;
-		
+
 		if (tex_scale_down == true && texture.stretch_to_power_of_two == true) {
 			texture.width			= std::max(round_down(width),  16U);
 			texture.height			= std::max(round_down(height), 16U);
@@ -1276,7 +1378,7 @@ int GL_LoadTextureLM (const char *identifier, int width, int height, const byte 
 			texture.width			= std::max(round_up(width),  16U);
 			texture.height			= std::max(round_up(height), 16U);
 		}
-		
+
 		// Allocate the RAM.
 		const std::size_t buffer_size = texture.width * texture.height * bpp;
 		texture.ram	= static_cast<texel*>(memalign(16, buffer_size));
@@ -1284,41 +1386,45 @@ int GL_LoadTextureLM (const char *identifier, int width, int height, const byte 
 		{
 			Sys_Error("Out of RAM for lightmap textures.");
 		}
-	
+
 		// Allocate the VRAM.
 		texture.vram = static_cast<texel*>(quake::vram::allocate(buffer_size));
-	
+
 		// Upload the texture.
 		if (bpp == 1)
 			GL_Upload8_A(texture_index, data, width, height);
 		else if (bpp == 2)
 			GL_Upload16(texture_index, data, width, height);
+		else if (bpp == 3)
+			GL_Upload24(texture_index, data, width, height);
 		else if (bpp == 4)
-			GL_Upload16(texture_index, data, width, height);
+			GL_Upload32(texture_index, data, width, height);
 
 		if (texture.vram && texture.ram) {
 			free(texture.ram);
 			texture.ram = NULL;
-		}	
+		}
 	}
-	else {	
+	else {
 		gltexture_t& texture = gltextures[texture_index];
-	
-		if ((width == texture.original_width) && 
+
+		if ((width == texture.original_width) &&
 		    (height == texture.original_height)) {
-			
+
 				if (bpp == 1)
 					GL_Upload8_A(texture_index, data, width, height);
 				else if (bpp == 2)
 					GL_Upload16(texture_index, data, width, height);
+				else if (bpp == 3)
+					GL_Upload24(texture_index, data, width, height);
 				else if (bpp == 4)
-					GL_Upload16(texture_index, data, width, height);
+					GL_Upload32(texture_index, data, width, height);
 			}
 
 		if (texture.vram && texture.ram) {
 			free(texture.ram);
 			texture.ram = NULL;
-		}	
+		}
 	}
 	// Done.
 	return texture_index;

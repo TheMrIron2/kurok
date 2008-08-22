@@ -18,7 +18,7 @@
 #include <string.h>
 #include <pspaudiocodec.h>
 #include <pspaudio.h> 
-#include "m33libs/kubridge.h"
+#include "m33libs/include/kubridge.h"
 
 int mp3_last_error = 0;
 
@@ -32,6 +32,8 @@ int done = 0;
 int mp3_job_started = 0;
 
 int mp3_volume;
+
+static int mp3_src_pos = 0;
 
 int first_run = 0;
 
@@ -50,7 +52,7 @@ static int working_buf = 0;
 
 static const char *mp3_fname = NULL;
 static SceUID mp3_handle = -1;
-static int mp3_src_pos = 0, mp3_src_size = 0;
+static int mp3_src_size = 0;
 
 static int decode_thread(SceSize args, void *argp);
 

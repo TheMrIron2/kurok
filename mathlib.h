@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // mathlib.h
+#include <pspgu.h>
 
 typedef float vec_t;
 typedef vec_t vec3_t[3];
@@ -27,6 +28,8 @@ typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
 
+//#ifdef PSP_SOFTWARE_VIDEO
+/*
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
@@ -35,10 +38,23 @@ typedef	int	fixed16_t;
 //#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 #define DEG2RAD( a ) ( (a) * M_PI_DIV_180 ) //johnfitz
 
+//#else
+*/
+#ifndef M_PI
+#define M_PI = GU_PI	// matches value in gcc v2 math.h
+#endif
+
+#define M_PI_DIV_180 (M_PI / 180.0) //johnfitz
+//#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
+#define DEG2RAD( a ) ( (a) * M_PI_DIV_180 ) //johnfitz
+//#endif
+
 struct mplane_s;
 
 extern vec3_t vec3_origin;
 extern	int nanmask;
+
+#define CLAMP(min, x, max) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x)) //johnfitz
 
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 

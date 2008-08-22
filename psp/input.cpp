@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -86,12 +86,15 @@ extern "C" int bind_grab;
 using namespace quake;
 using namespace quake::input;
 
+extern cvar_t cl_yawspeed;
+extern cvar_t cl_pitchspeed;
+
 extern cvar_t in_freelook_analog;
 extern cvar_t in_analog_strafe;
 
-extern cvar_t in_zoom_adjust;
 extern cvar_t in_x_axis_adjust;
 extern cvar_t in_y_axis_adjust;
+extern cvar_t scr_fov;
 
 void IN_Init (void)
 {
@@ -120,7 +123,7 @@ void IN_Init (void)
 	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_LTRIGGER)]	= K_AUX1;
 	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_RTRIGGER)]	= K_AUX2;
 	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_TRIANGLE)]	= K_JOY1;
-	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_CIRCLE)]		= K_JOY2;	
+	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_CIRCLE)]		= K_JOY2;
 	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_CROSS)]		= K_JOY3;
 	buttonToGameKeyMap[buttonMaskToShift(PSP_CTRL_SQUARE)]		= K_JOY4;
 
@@ -273,18 +276,18 @@ float IN_CalcInput(int axis, float speed, float tolerance, float acceleration) {
 	if (value == 0.0f) {
 		return 0.0f;
 	}
-	
+
 	float abs_value = fabs(value);
-	
+
 	if (abs_value < tolerance) {
 		return 0.0f;
 	}
-	
+
 	abs_value -= tolerance;
 	abs_value /= (1.0f - tolerance);
 	abs_value = powf(abs_value, acceleration);
 	abs_value *= speed;
-	
+
 	if (value < 0.0f) {
 		value = -abs_value;
 	} else {
@@ -297,18 +300,57 @@ void IN_Move (usercmd_t *cmd)
 {
 	unsigned char analog_strafe = 0;
 
+	int   x_adjust;
+	int   y_adjust;
+	float speed;
+
 	// Don't let the pitch drift back to centre if analog nub look is on.
 	if (in_freelook_analog.value)
 	{
         Cbuf_AddText("+mlook\n");
 		V_StopPitchDrift();
     }
-	else 
+	else
     {
         Cbuf_AddText("-mlook\n");
         if (in_analog_strafe.value || (in_strafe.state & 1))
 			analog_strafe = 1;
 	}
+
+	if(kurok)
+	{
+		if(scr_fov.value <= 25)
+		{
+			x_adjust = in_x_axis_adjust.value / 4;
+			y_adjust = in_y_axis_adjust.value / 4;
+			speed = in_sensitivity.value / 4;
+		}
+		else if(scr_fov.value <= 50)
+		{
+			x_adjust = in_x_axis_adjust.value / 3;
+			y_adjust = in_y_axis_adjust.value / 3;
+			speed = in_sensitivity.value / 3;
+		}
+		else if(scr_fov.value <= 75)
+		{
+			x_adjust = in_x_axis_adjust.value / 2;
+			y_adjust = in_y_axis_adjust.value / 2;
+			speed = in_sensitivity.value / 2;
+		}
+		else
+		{
+			x_adjust = in_x_axis_adjust.value;
+			y_adjust = in_y_axis_adjust.value;
+   			speed = in_sensitivity.value;
+		}
+	}
+	else
+	{
+		x_adjust = in_x_axis_adjust.value;
+		y_adjust = in_y_axis_adjust.value;
+		speed = in_sensitivity.value;
+	}
+
 	// Read the pad state.
 	SceCtrlData pad;
 	sceCtrlPeekBufferPositive(&pad, 1);
@@ -316,18 +358,14 @@ void IN_Move (usercmd_t *cmd)
 	// Convert the inputs to floats in the range [-1, 1].
 	// Implement the dead zone.
 	float deadZone = in_tolerance.value;
-	float speed = in_sensitivity.value - in_zoom_adjust.value;
 	float acceleration = in_acceleration.value;
-
-	int   x_adjust = in_x_axis_adjust.value;
-	int   y_adjust = in_y_axis_adjust.value;
 
 	if (speed <= 0)
 		speed = 0;
 
     float x = IN_CalcInput(pad.Lx, (speed *0.1) + x_adjust, deadZone, acceleration);
 	float y = IN_CalcInput(pad.Ly, (speed *0.1) + y_adjust, deadZone, acceleration);
-	
+
 	// Set the yaw.
 
 	// Analog nub look?
@@ -341,7 +379,7 @@ void IN_Move (usercmd_t *cmd)
 			const bool invertPitch = m_pitch.value < 0;
 			const float pitchScale = yawScale * (invertPitch ? -1 : 1);
 			cl.viewangles[PITCH] += pitchScale * y * host_frametime;
-	
+
 			// Don't look too far up or down.
 			if (cl.viewangles[PITCH] > 90.0f)
 				cl.viewangles[PITCH] = 90.0f;
@@ -353,7 +391,7 @@ void IN_Move (usercmd_t *cmd)
 			// Move using up and down.
 			cmd->forwardmove -= cl_forwardspeed.value * y;
 		}
-	} else {	
+	} else {
 		cmd->sidemove += cl_sidespeed.value * x;
 		cmd->forwardmove -= cl_forwardspeed.value * y;
 	}

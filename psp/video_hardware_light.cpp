@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -36,7 +36,7 @@ R_AnimateLight
 void R_AnimateLight (void)
 {
 	int			i,j,k;
-	
+
 //
 // light animations
 // 'm' is normal light, 'a' is no light, 'z' is double bright
@@ -52,7 +52,7 @@ void R_AnimateLight (void)
 		k = cl_lightstyle[j].map[k] - 'a';
 		k = k*22;
 		d_lightstylevalue[j] = k;
-	}	
+	}
 }
 
 /*
@@ -78,6 +78,7 @@ static void AddLightBlend (float r, float g, float b, float a2)
 
 static void R_RenderDlight (dlight_t *light)
 {
+    /*
 //	int		i, j;
 //	float	a;
 	vec3_t	v;
@@ -91,7 +92,7 @@ static void R_RenderDlight (dlight_t *light)
 		AddLightBlend (1, 0.5, 0, light->radius * 0.0003);
 		return;
 	}
-
+*/
 	/*
 	glBegin (GL_TRIANGLE_FAN);
 	glColor3f (0.2,0.1,0.0);
@@ -165,13 +166,13 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 	float		dist;
 	msurface_t	*surf;
 	int			i;
-	
+
 	if (node->contents < 0)
 		return;
 
 	splitplane = node->plane;
 	dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
-	
+
 	if (dist > light->radius)
 	{
 		R_MarkLights (light, bit, node->children[0]);
@@ -182,7 +183,7 @@ void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 		R_MarkLights (light, bit, node->children[1]);
 		return;
 	}
-		
+
 // mark the polygons
 	surf = cl.worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
@@ -214,7 +215,11 @@ loc0:
 
 	splitplane = node->plane;
 //	dist = PlaneDiff(light->origin, splitplane);
-	dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
+
+	if (splitplane->type < 3)
+		dist = light->origin[splitplane->type] - splitplane->dist;
+	else
+		dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
 
 	if (dist > light->radius)
 	{
@@ -309,6 +314,7 @@ LIGHT SAMPLING
 mplane_t		*lightplane;
 vec3_t			lightspot;
 
+/*
 int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 {
 	int			r;
@@ -334,7 +340,7 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	front = DotProduct (start, plane->normal) - plane->dist;
 	back = DotProduct (end, plane->normal) - plane->dist;
 	side = front < 0;
-	
+
 	if ( (back < 0) == side)
 		return RecursiveLightPoint (node->children[side], start, end);
 
@@ -342,15 +348,15 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 	mid[0] = start[0] + (end[0] - start[0])*frac;
 	mid[1] = start[1] + (end[1] - start[1])*frac;
 	mid[2] = start[2] + (end[2] - start[2])*frac;
-	
-// go down front side	
+
+// go down front side
 	r = RecursiveLightPoint (node->children[side], start, mid);
 	if (r >= 0)
 		return r;		// hit something
-		
+
 	if ( (back < 0) == side )
 		return -1;		// didn't hit anuthing
-		
+
 // check for impact on this node
 	VectorCopy (mid, lightspot);
 	lightplane = plane;
@@ -362,17 +368,17 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 			continue;	// no lightmaps
 
 		tex = surf->texinfo;
-		
+
 		s = DotProduct (mid, tex->vecs[0]) + tex->vecs[0][3];
 		t = DotProduct (mid, tex->vecs[1]) + tex->vecs[1][3];;
 
 		if (s < surf->texturemins[0] ||
 		t < surf->texturemins[1])
 			continue;
-		
+
 		ds = s - surf->texturemins[0];
 		dt = t - surf->texturemins[1];
-		
+
 		if ( ds > surf->extents[0] || dt > surf->extents[1] )
 			continue;
 
@@ -397,10 +403,10 @@ int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 				lightmap += ((surf->extents[0]>>4)+1) *
 						((surf->extents[1]>>4)+1);
 			}
-			
+
 			r >>= 8;
 		}
-		
+
 		return r;
 	}
 
@@ -412,158 +418,137 @@ int R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	int			r;
-	
+
 	if (!cl.worldmodel->lightdata)
 		return 255;
-	
+
 	end[0] = p[0];
 	end[1] = p[1];
 	end[2] = p[2] - 2048;
-	
+
 	r = RecursiveLightPoint (cl.worldmodel->nodes, p, end);
-	
+
 	if (r == -1)
 		r = 0;
 
 	return r;
 }
-
-
-/*
-=============================================================================
-
-VERTEX LIGHTING
-
-=============================================================================
 */
 
-/*
-float	vlight_pitch = 45;
-float	vlight_yaw = 45;
-float	vlight_highcut = 128;
-float	vlight_lowcut = 60;
-
-#define NUMVERTEXNORMALS	162
-extern	float	r_avertexnormals[NUMVERTEXNORMALS][3];
-
-byte	anorm_pitch[NUMVERTEXNORMALS];
-byte	anorm_yaw[NUMVERTEXNORMALS];
-
-byte	vlighttable[256][256];
-
-float R_GetVertexLightValue (int index, float apitch, float ayaw)
+// LordHavoc: .lit support begin
+// LordHavoc: original code replaced entirely
+int RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
 {
-	int	pitchofs, yawofs;
-	float	retval;
+	float		front, back, frac;
+	vec3_t		mid;
 
-	pitchofs = anorm_pitch[index] + (apitch * 256 / 360);
-	yawofs = anorm_yaw[index] + (ayaw * 256 / 360);
-	while (pitchofs > 255)
-		pitchofs -= 256;
-	while (yawofs > 255)
-		yawofs -= 256;
-	while (pitchofs < 0)
-		pitchofs += 256;
-	while (yawofs < 0)
-		yawofs += 256;
+loc0:
+	if (node->contents < 0)
+		return false;		// didn't hit anything
 
-	retval = vlighttable[pitchofs][yawofs];
-
-	return retval / 256;
-}
-
-float R_LerpVertexLight (int index1, int index2, float ilerp, float apitch, float ayaw)
-{
-	float	lightval1, lightval2, val;
-
-	lightval1 = R_GetVertexLightValue (index1, apitch, ayaw);
-	lightval2 = R_GetVertexLightValue (index2, apitch, ayaw);
-
-	val = (lightval2*ilerp) + (lightval1*(1-ilerp));
-
-	return val;
-}
-
-void R_ResetAnormTable (void)
-{
-	int	i, j;
-	float	forward, yaw, pitch, angle, sp, sy, cp, cy, precut;
-	vec3_t	normal, lightvec;
-
-	// Define the light vector here
-	angle = DEG2RAD(vlight_pitch);
-	sy = sin(angle);
-	cy = cos(angle);
-	angle = DEG2RAD(-vlight_yaw);
-	sp = sin(angle);
-	cp = cos(angle);
-	lightvec[0] = cp*cy;
-	lightvec[1] = cp*sy;
-	lightvec[2] = -sp;
-
-	// First thing that needs to be done is the conversion of the
-	// anorm table into a pitch/yaw table
-
-	for (i=0 ; i<NUMVERTEXNORMALS ; i++)
+// calculate mid point
+	if (node->plane->type < 3)
 	{
-		if (r_avertexnormals[i][1] == 0 && r_avertexnormals[i][0] == 0)
-		{
-			yaw = 0;
-			if (r_avertexnormals[i][2] > 0)
-				pitch = 90;
-			else
-				pitch = 270;
-		}
-		else
-		{
-			yaw = (int)(atan2(r_avertexnormals[i][1], r_avertexnormals[i][0]) * 57.295779513082320);
-			if (yaw < 0)
-				yaw += 360;
-	
-			forward = sqrt(r_avertexnormals[i][0]*r_avertexnormals[i][0] + r_avertexnormals[i][1]*r_avertexnormals[i][1]);
-			pitch = (int)(atan2(r_avertexnormals[i][2], forward) * 57.295779513082320);
-			if (pitch < 0)
-				pitch += 360;
-		}
-		anorm_pitch[i] = pitch * 256 / 360;
-		anorm_yaw[i] = yaw * 256 / 360;
+		front = start[node->plane->type] - node->plane->dist;
+		back = end[node->plane->type] - node->plane->dist;
+	}
+	else
+	{
+		front = DotProduct(start, node->plane->normal) - node->plane->dist;
+		back = DotProduct(end, node->plane->normal) - node->plane->dist;
 	}
 
-	// Next, a light value table must be constructed for pitch/yaw offsets
-	// DotProduct values
-
-	// DotProduct values never go higher than 2, so store bytes as
-	// (product * 127.5)
-
-	for (i=0 ; i<256 ; i++)
+	// LordHavoc: optimized recursion
+	if ((back < 0) == (front < 0))
+//		return RecursiveLightPoint (color, node->children[front < 0], start, end);
 	{
-		angle = DEG2RAD(i * 360 / 256);
-		sy = sin(angle);
-		cy = cos(angle);
-		for (j=0 ; j<256 ; j++)
+		node = node->children[front < 0];
+		goto loc0;
+	}
+
+	frac = front / (front-back);
+	mid[0] = start[0] + (end[0] - start[0])*frac;
+	mid[1] = start[1] + (end[1] - start[1])*frac;
+	mid[2] = start[2] + (end[2] - start[2])*frac;
+
+// go down front side
+	if (RecursiveLightPoint (color, node->children[front < 0], start, mid))
+		return true;	// hit something
+	else
+	{
+		int i, ds, dt;
+		msurface_t *surf;
+	// check for impact on this node
+		VectorCopy (mid, lightspot);
+		lightplane = node->plane;
+
+		surf = cl.worldmodel->surfaces + node->firstsurface;
+		for (i = 0;i < node->numsurfaces;i++, surf++)
 		{
-			angle = DEG2RAD(j * 360 / 256);
-			sp = sin(angle);
-			cp = cos(angle);
+			if (surf->flags & SURF_DRAWTILED)
+				continue;	// no lightmaps
 
-			normal[0] = cp*cy;
-			normal[1] = cp*sy;
-			normal[2] = -sp;
+			ds = (int) ((float) DotProduct (mid, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3]);
+			dt = (int) ((float) DotProduct (mid, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3]);
 
-			precut = ((DotProduct(normal, lightvec) + 2) * 31.5);
-			precut = (precut - (vlight_lowcut)) * 256 / (vlight_highcut - vlight_lowcut);
-			if (precut > 255)
-				precut = 255;
-			if (precut < 0)
-				precut = 0;
-			vlighttable[i][j] = precut;
+			if (ds < surf->texturemins[0] || dt < surf->texturemins[1])
+				continue;
+
+			ds -= surf->texturemins[0];
+			dt -= surf->texturemins[1];
+
+			if (ds > surf->extents[0] || dt > surf->extents[1])
+				continue;
+
+			if (surf->samples)
+			{
+				// LordHavoc: enhanced to interpolate lighting
+				byte *lightmap;
+				int maps, line3, dsfrac = ds & 15, dtfrac = dt & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
+				float scale;
+				line3 = ((surf->extents[0]>>4)+1)*3;
+
+				lightmap = surf->samples + ((dt>>4) * ((surf->extents[0]>>4)+1) + (ds>>4))*3; // LordHavoc: *3 for color
+
+				for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255;maps++)
+				{
+					scale = (float) d_lightstylevalue[surf->styles[maps]] * 1.0 / 256.0;
+					r00 += (float) lightmap[      0] * scale;g00 += (float) lightmap[      1] * scale;b00 += (float) lightmap[2] * scale;
+					r01 += (float) lightmap[      3] * scale;g01 += (float) lightmap[      4] * scale;b01 += (float) lightmap[5] * scale;
+					r10 += (float) lightmap[line3+0] * scale;g10 += (float) lightmap[line3+1] * scale;b10 += (float) lightmap[line3+2] * scale;
+					r11 += (float) lightmap[line3+3] * scale;g11 += (float) lightmap[line3+4] * scale;b11 += (float) lightmap[line3+5] * scale;
+					lightmap += ((surf->extents[0]>>4)+1) * ((surf->extents[1]>>4)+1)*3; // LordHavoc: *3 for colored lighting
+				}
+
+				color[0] += (float) ((int) ((((((((r11-r10) * dsfrac) >> 4) + r10)-((((r01-r00) * dsfrac) >> 4) + r00)) * dtfrac) >> 4) + ((((r01-r00) * dsfrac) >> 4) + r00)));
+				color[1] += (float) ((int) ((((((((g11-g10) * dsfrac) >> 4) + g10)-((((g01-g00) * dsfrac) >> 4) + g00)) * dtfrac) >> 4) + ((((g01-g00) * dsfrac) >> 4) + g00)));
+				color[2] += (float) ((int) ((((((((b11-b10) * dsfrac) >> 4) + b10)-((((b01-b00) * dsfrac) >> 4) + b00)) * dtfrac) >> 4) + ((((b01-b00) * dsfrac) >> 4) + b00)));
+			}
+			return true; // success
 		}
+
+	// go down back side
+		return RecursiveLightPoint (color, node->children[front >= 0], mid, end);
 	}
 }
 
-void R_InitVertexLights (void)
+vec3_t lightcolor; // LordHavoc: used by model rendering
+int R_LightPoint (vec3_t p)
 {
-	R_ResetAnormTable ();
-}
+	vec3_t		end;
 
-*/
+	if (r_fullbright.value || !cl.worldmodel->lightdata)
+	{
+		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
+		return 255;
+	}
+
+	end[0] = p[0];
+	end[1] = p[1];
+	end[2] = p[2] - 2048;
+
+	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
+	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);
+	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
+}
+// LordHavoc: .lit support end

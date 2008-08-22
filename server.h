@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -40,10 +40,10 @@ typedef struct
 	qboolean	loadgame;			// handle connections specially
 
 	double		time;
-	
+
 	int			lastcheck;			// used by PF_checkclient
 	double		lastchecktime;
-	
+
 	char		name[64];			// map name
 #ifdef QUAKE2
 	char		startspot[64];
@@ -97,14 +97,14 @@ typedef struct client_s
 	edict_t			*edict;				// EDICT_NUM(clientnum+1)
 	char			name[32];			// for printing to other people
 	int				colors;
-		
+
 	float			ping_times[NUM_PING_TIMES];
 	int				num_pings;			// ping_times[num_pings%NUM_PING_TIMES]
 
 // spawn parms are carried from level to level
 	float			spawn_parms[NUM_SPAWN_PARMS];
 
-// client known data for deltas	
+// client known data for deltas
 	int				old_frags;
 } client_t;
 
@@ -170,6 +170,8 @@ typedef struct client_s
 #define	EF_MUZZLEFLASH 			2
 #define	EF_BRIGHTLIGHT 			4
 #define	EF_DIMLIGHT 			8
+#define	EF_REDLIGHT 			16
+#define	EF_BLUELIGHT 			32
 #ifdef QUAKE2
 #define EF_DARKLIGHT			16
 #define EF_DARKFIELD			32
